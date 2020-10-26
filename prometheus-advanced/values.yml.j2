@@ -1,0 +1,620 @@
+## Create default rules for monitoring the cluster
+##
+defaultRules:
+  create: true
+  rules:
+    kubernetesApps: false
+    kubeScheduler: false # kubernetesAbsent rule contains the same content
+
+## Provide custom recording or alerting rules to be deployed into the cluster.
+additionalPrometheusRules:
+  - name: kubernetes-apps
+    groups:
+      - name: kubernetes-apps
+        rules:
+        - alert: KubePodCrashLooping-System
+          annotations:
+            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container
+              }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodcrashlooping
+          expr: rate(kube_pod_container_status_restarts_total{job="kube-state-metrics",
+            namespace=~"[% system_namespaces_regex %]"}[15m]) * 60 * 5 > 0
+          for: 15m
+          labels:
+            severity: critical
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubePodCrashLooping
+          annotations:
+            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container
+              }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodcrashlooping
+          expr: rate(kube_pod_container_status_restarts_total{job="kube-state-metrics",
+            namespace!~"[% system_namespaces_regex %]"}[15m]) * 60 * 5 > 0
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubePodNotReady-System
+          annotations:
+            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready
+              state for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodnotready
+          expr: sum by(namespace, pod, label_example_com_ci_monitoring) (max by(namespace, pod,label_example_com_ci_monitoring)     (kube_pod_status_phase{job="kube-state-metrics",namespace=~"[% system_namespaces_regex %]",phase=~"Pending|Unknown"}) * on(namespace, pod) group_left    (owner_kind) max by(namespace, pod, owner_kind, label_example_com_ci_monitoring) (kube_pod_owner{owner_kind!="Job"})) > 0
+          for: 15m
+          labels:
+            severity: critical
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubePodNotReady
+          annotations:
+            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready
+              state for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodnotready
+          expr: sum by(namespace, pod, label_example_com_ci_monitoring) (max by(namespace, pod,label_example_com_ci_monitoring)     (kube_pod_status_phase{job="kube-state-metrics",namespace!~"[% system_namespaces_regex %]",phase=~"Pending|Unknown"}) * on(namespace, pod) group_left    (owner_kind) max by(namespace, pod, owner_kind, label_example_com_ci_monitoring) (kube_pod_owner{owner_kind!="Job"})) > 0
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeDeploymentGenerationMismatch-System
+          annotations:
+            message: Deployment generation for {{ $labels.namespace }}/{{ $labels.deployment
+              }} does not match, this indicates that the Deployment has failed but has
+              not been rolled back.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedeploymentgenerationmismatch
+          expr: "kube_deployment_status_observed_generation{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"}\n  !=\nkube_deployment_metadata_generation{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: critical
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeDeploymentGenerationMismatch
+          annotations:
+            message: Deployment generation for {{ $labels.namespace }}/{{ $labels.deployment
+              }} does not match, this indicates that the Deployment has failed but has
+              not been rolled back.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedeploymentgenerationmismatch
+          expr: "kube_deployment_status_observed_generation{job=\"kube-state-metrics\"\
+            , namespace!~\"[% system_namespaces_regex %]\"}\n  !=\nkube_deployment_metadata_generation{job=\"kube-state-metrics\"\
+            , namespace!~\"[% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeDeploymentReplicasMismatch-System
+          annotations:
+            message: Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has
+              not matched the expected number of replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedeploymentreplicasmismatch
+          expr: "kube_deployment_spec_replicas{job=\"kube-state-metrics\", namespace=~\"\
+            [% system_namespaces_regex %]\"}\n  !=\nkube_deployment_status_replicas_available{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: critical
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeDeploymentReplicasMismatch
+          annotations:
+            message: Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has
+              not matched the expected number of replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedeploymentreplicasmismatch
+          expr: "kube_deployment_spec_replicas{job=\"kube-state-metrics\", namespace!~\"\
+            [% system_namespaces_regex %]\"}\n  !=\nkube_deployment_status_replicas_available{job=\"kube-state-metrics\"\
+            , namespace!~\"[% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeStatefulSetReplicasMismatch-System
+          annotations:
+            message: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has
+              not matched the expected number of replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetreplicasmismatch
+          expr: "kube_statefulset_status_replicas_ready{job=\"kube-state-metrics\",\
+            \ namespace=~\"[% system_namespaces_regex %]\"}\n  !=\nkube_statefulset_status_replicas{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: critical
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeStatefulSetReplicasMismatch
+          annotations:
+            message: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has
+              not matched the expected number of replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetreplicasmismatch
+          expr: "kube_statefulset_status_replicas_ready{job=\"kube-state-metrics\",\
+            \ namespace!~\"[% system_namespaces_regex %]\"}\n  !=\nkube_statefulset_status_replicas{job=\"kube-state-metrics\"\
+            , namespace!~\"[% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeStatefulSetGenerationMismatch-System
+          annotations:
+            message: StatefulSet generation for {{ $labels.namespace }}/{{ $labels.statefulset
+              }} does not match, this indicates that the StatefulSet has failed but
+              has not been rolled back.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetgenerationmismatch
+          expr: "kube_statefulset_status_observed_generation{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"}\n  !=\nkube_statefulset_metadata_generation{job=\"\
+            kube-state-metrics\", namespace=~\"[% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: critical
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeStatefulSetGenerationMismatch
+          annotations:
+            message: StatefulSet generation for {{ $labels.namespace }}/{{ $labels.statefulset
+              }} does not match, this indicates that the StatefulSet has failed but
+              has not been rolled back.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetgenerationmismatch
+          expr: "kube_statefulset_status_observed_generation{job=\"kube-state-metrics\"\
+            , namespace!~\"[% system_namespaces_regex %]\"}\n  !=\nkube_statefulset_metadata_generation{job=\"\
+            kube-state-metrics\", namespace!~\"[% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeStatefulSetUpdateNotRolledOut-System
+          annotations:
+            message: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} update
+              has not been rolled out.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetupdatenotrolledout
+          expr: "max without (revision) (\n  kube_statefulset_status_current_revision{job=\"\
+            kube-state-metrics\", namespace=~\"[% system_namespaces_regex %]\"}\n    unless\n  kube_statefulset_status_update_revision{job=\"\
+            kube-state-metrics\", namespace=~\"[% system_namespaces_regex %]\"}\n)\n  *\n(\n  kube_statefulset_replicas{job=\"\
+            kube-state-metrics\", namespace=~\"[% system_namespaces_regex %]\"}\n    !=\n  kube_statefulset_status_replicas_updated{job=\"\
+            kube-state-metrics\", namespace=~\"[% system_namespaces_regex %]\"}\n)"
+          for: 15m
+          labels:
+            severity: critical
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeStatefulSetUpdateNotRolledOut
+          annotations:
+            message: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} update
+              has not been rolled out.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatefulsetupdatenotrolledout
+          expr: "max without (revision) (\n  kube_statefulset_status_current_revision{job=\"\
+            kube-state-metrics\", namespace!~\"[% system_namespaces_regex %]\"}\n    unless\n  kube_statefulset_status_update_revision{job=\"\
+            kube-state-metrics\", namespace!~\"[% system_namespaces_regex %]\"}\n)\n  *\n(\n  kube_statefulset_replicas{job=\"\
+            kube-state-metrics\", namespace!~\"[% system_namespaces_regex %]\"}\n    !=\n  kube_statefulset_status_replicas_updated{job=\"\
+            kube-state-metrics\", namespace!~\"[% system_namespaces_regex %]\"}\n)"
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeDaemonSetRolloutStuck-System
+          annotations:
+            message: Only {{ $value | humanizePercentage }} of the desired Pods of DaemonSet
+              {{ $labels.namespace }}/{{ $labels.daemonset }} are scheduled and ready.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetrolloutstuck
+          expr: "kube_daemonset_status_number_ready{job=\"kube-state-metrics\", namespace=~\"\
+            [% system_namespaces_regex %]\"}\n  /\nkube_daemonset_status_desired_number_scheduled{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"} < 1.00"
+          for: 15m
+          labels:
+            severity: critical
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeDaemonSetRolloutStuck
+          annotations:
+            message: Only {{ $value | humanizePercentage }} of the desired Pods of DaemonSet
+              {{ $labels.namespace }}/{{ $labels.daemonset }} are scheduled and ready.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetrolloutstuck
+          expr: "kube_daemonset_status_number_ready{job=\"kube-state-metrics\", namespace=~\"\
+            [% system_namespaces_regex %]\"}\n  /\nkube_daemonset_status_desired_number_scheduled{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"} < 1.00"
+          for: 15m
+          labels:
+            severity: critical
+        - alert: KubeContainerWaiting-System
+          annotations:
+            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container}}
+              has been in waiting state for longer than 1 hour.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubecontainerwaiting
+          expr: sum by(namespace, pod, container,label_example_com_ci_monitoring) (kube_pod_container_status_waiting_reason    {job="kube-state-metrics",namespace=~"[% system_namespaces_regex %]"}) > 0
+          for: 1h
+          labels:
+            severity: warning
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeContainerWaiting
+          annotations:
+            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container}}
+              has been in waiting state for longer than 1 hour.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubecontainerwaiting
+          expr: sum by(namespace, pod, container,label_example_com_ci_monitoring) (kube_pod_container_status_waiting_reason    {job="kube-state-metrics",namespace!~"[% system_namespaces_regex %]"}) > 0
+          for: 1h
+          labels:
+            severity: warning
+        - alert: KubeDaemonSetNotScheduled-System
+          annotations:
+            message: '{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset
+              }} are not scheduled.'
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetnotscheduled
+          expr: "kube_daemonset_status_desired_number_scheduled{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"}\n  -\nkube_daemonset_status_current_number_scheduled{job=\"\
+            kube-state-metrics\", namespace=~\".*\"} > 0"
+          for: 10m
+          labels:
+            severity: warning
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeDaemonSetNotScheduled
+          annotations:
+            message: '{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset
+              }} are not scheduled.'
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetnotscheduled
+          expr: "kube_daemonset_status_desired_number_scheduled{job=\"kube-state-metrics\"\
+            , namespace!~\"[% system_namespaces_regex %]\"}\n  -\nkube_daemonset_status_current_number_scheduled{job=\"\
+            kube-state-metrics\", namespace=~\".*\"} > 0"
+          for: 10m
+          labels:
+            severity: warning
+        - alert: KubeDaemonSetMisScheduled-System
+          annotations:
+            message: '{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset
+              }} are running where they are not supposed to run.'
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetmisscheduled
+          expr: kube_daemonset_status_number_misscheduled{job="kube-state-metrics",
+            namespace=~"[% system_namespaces_regex %]"} > 0
+          for: 10m
+          labels:
+            severity: warning
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeDaemonSetMisScheduled
+          annotations:
+            message: '{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset
+              }} are running where they are not supposed to run.'
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetmisscheduled
+          expr: kube_daemonset_status_number_misscheduled{job="kube-state-metrics",
+            namespace!~"[% system_namespaces_regex %]"} > 0
+          for: 10m
+          labels:
+            severity: warning
+        - alert: KubeCronJobRunning-System
+          annotations:
+            message: CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} is taking
+              more than 1h to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubecronjobrunning
+          expr: time() - kube_cronjob_next_schedule_time{job="kube-state-metrics", namespace=~"[% system_namespaces_regex %]"}
+            > 3600
+          for: 1h
+          labels:
+            severity: warning
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeCronJobRunning
+          annotations:
+            message: CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} is taking
+              more than 1h to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubecronjobrunning
+          expr: time() - kube_cronjob_next_schedule_time{job="kube-state-metrics", namespace!~"[% system_namespaces_regex %]"}
+            > 3600
+          for: 1h
+          labels:
+            severity: warning
+        - alert: KubeJobCompletion-System
+          annotations:
+            message: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
+              than one hour to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobcompletion
+          expr: kube_job_spec_completions{job="kube-state-metrics", namespace=~"[% system_namespaces_regex %]"}
+            - kube_job_status_succeeded{job="kube-state-metrics", namespace=~"[% system_namespaces_regex %]"}  >
+            0
+          for: 1h
+          labels:
+            severity: warning
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeJobCompletion
+          annotations:
+            message: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
+              than one hour to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobcompletion
+          expr: kube_job_spec_completions{job="kube-state-metrics", namespace!~"[% system_namespaces_regex %]"}
+            - kube_job_status_succeeded{job="kube-state-metrics", namespace!~"[% system_namespaces_regex %]"}  >
+            0
+          for: 1h
+          labels:
+            severity: warning
+        - alert: KubeJobFailed-System
+          annotations:
+            message: Job {{ $labels.namespace }}/{{ $labels.job_name }} failed to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobfailed
+          expr: kube_job_failed{job="kube-state-metrics", namespace=~"[% system_namespaces_regex %]"}  > 0
+          for: 15m
+          labels:
+            severity: warning
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeJobFailed
+          annotations:
+            message: Job {{ $labels.namespace }}/{{ $labels.job_name }} failed to complete.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobfailed
+          expr: kube_job_failed{job="kube-state-metrics", namespace!~"[% system_namespaces_regex %]"}  > 0
+          for: 15m
+          labels:
+            severity: warning
+        - alert: KubeHpaReplicasMismatch-System
+          annotations:
+            message: HPA {{ $labels.namespace }}/{{ $labels.hpa }} has not matched the
+              desired number of replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubehpareplicasmismatch
+          expr: "(kube_hpa_status_desired_replicas{job=\"kube-state-metrics\", namespace=~\"\
+            [% system_namespaces_regex %]\"}\n  !=\nkube_hpa_status_current_replicas{job=\"kube-state-metrics\"\
+            , namespace=~\"[% system_namespaces_regex %]\"})\n  and\nchanges(kube_hpa_status_current_replicas[15m])\
+            \ == 0"
+          for: 15m
+          labels:
+            severity: warning
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeHpaReplicasMismatch
+          annotations:
+            message: HPA {{ $labels.namespace }}/{{ $labels.hpa }} has not matched the
+              desired number of replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubehpareplicasmismatch
+          expr: "(kube_hpa_status_desired_replicas{job=\"kube-state-metrics\", namespace!~\"\
+            [% system_namespaces_regex %]\"}\n  !=\nkube_hpa_status_current_replicas{job=\"kube-state-metrics\"\
+            , namespace!~\"[% system_namespaces_regex %]\"})\n  and\nchanges(kube_hpa_status_current_replicas[15m])\
+            \ == 0"
+          for: 15m
+          labels:
+            severity: warning
+        - alert: KubeHpaMaxedOut-System
+          annotations:
+            message: HPA {{ $labels.namespace }}/{{ $labels.hpa }} has been running
+              at max replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubehpamaxedout
+          expr: "kube_hpa_status_current_replicas{job=\"kube-state-metrics\", namespace=~\"\
+            [% system_namespaces_regex %]\"}\n  ==\nkube_hpa_spec_max_replicas{job=\"kube-state-metrics\", namespace=~\"\
+            [% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: warning
+            label_example_com_ci_monitoring: [% ci_cluster_id %]
+        - alert: KubeHpaMaxedOut
+          annotations:
+            message: HPA {{ $labels.namespace }}/{{ $labels.hpa }} has been running
+              at max replicas for longer than 15 minutes.
+            runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubehpamaxedout
+          expr: "kube_hpa_status_current_replicas{job=\"kube-state-metrics\", namespace!~\"\
+            [% system_namespaces_regex %]\"}\n  ==\nkube_hpa_spec_max_replicas{job=\"kube-state-metrics\", namespace!~\"\
+            [% system_namespaces_regex %]\"}"
+          for: 15m
+          labels:
+            severity: warning
+global:
+  rbac:
+    create: true
+
+
+alertmanager:
+  enabled: true
+
+  config:
+    global: {}
+    receivers:
+    - name: default-receiver
+      webhook_configs:
+      - url: "[% alertmanager_webhook_url %]"
+        send_resolved: true
+      email_configs:
+      - send_resolved: true
+        to: [% alertmanager_smtp_to %]
+        from: [% alertmanager_smtp_from %]
+        smarthost: [% alertmanager_smtp_host %]
+        require_tls: false
+    - name: 'null'
+    route:
+      group_by: ['job']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 24h
+      receiver: default-receiver
+#      routes:
+#      - match:
+#          alertname: Watchdog
+#        receiver: 'null'
+
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts:
+    - alertmanager.[% ingress_url_suffix %]
+
+  alertmanagerSpec:
+    strategy:
+      type: "Recreate"
+
+
+## Configuration for kube-state-metrics subchart
+##
+kube-state-metrics:
+
+  podSecurityPolicy:
+    enabled: true
+
+## Deploy node exporter as a daemonset to all nodes
+##
+nodeExporter:
+  enabled: false
+
+kubeControllerManager:
+  enabled: false
+  service:
+    port: 10252
+    targetPort: 10252
+    selector:
+      k8s-app: kube-dns
+
+kubeScheduler:
+  enabled: false
+  service:
+    port: 10251
+    targetPort: 10251
+    selector:
+      k8s-app: kube-dns
+
+## Manages Prometheus and Alertmanager components
+##
+prometheusOperator:
+  enabled: true
+
+  tlsProxy:
+    enabled: true
+    resources: {}
+
+  ## Namespaces to scope the interaction of the Prometheus Operator and the apiserver (allow list).
+  ## This is mutually exclusive with denyNamespaces. Setting this to an empty object will disable the configuration
+  ##
+  namespaces: {}
+
+  ## Namespaces not to scope the interaction of the Prometheus Operator (deny list).
+  ##
+  denyNamespaces: []
+
+
+  ## Deploy CRDs used by Prometheus Operator.
+  ##
+  createCustomResource: true
+
+  ## Attempt to clean up CRDs created by Prometheus Operator.
+  ##
+  cleanupCustomResource: false
+
+
+
+## Deploy a Prometheus instance
+##
+prometheus:
+
+  enabled: true
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts:
+    - prometheus.[% ingress_url_suffix %]
+
+  ## Settings affecting prometheusSpec
+  ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+  ##
+  prometheusSpec:
+    logLevel: info
+    externalLabels:
+      label_example_com_ci_cluster: [% ci_cluster_id %]
+
+
+    ## Pod anti-affinity can prevent the scheduler from placing Prometheus replicas on the same node.
+    ## The default value "soft" means that the scheduler should *prefer* to not schedule two replica pods onto the same node but no guarantee is provided.
+    ## The value "hard" means that the scheduler is *required* to not schedule two replica pods onto the same node.
+    ## The value "" will disable pod anti-affinity so that no anti-affinity rules will be configured.
+    podAntiAffinity: ""
+
+    ## If anti-affinity is enabled sets the topologyKey to use for anti-affinity.
+    ## This can be changed to, for example, failure-domain.beta.kubernetes.io/zone
+    ##
+    podAntiAffinityTopologyKey: kubernetes.io/hostname
+
+    ## Prometheus StorageSpec for persistent data
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/user-guides/storage.md
+    ##
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+
+    ## AdditionalScrapeConfigs allows specifying additional Prometheus scrape configurations. Scrape configurations
+    ## are appended to the configurations generated by the Prometheus Operator. Job configurations must have the form
+    ## as specified in the official Prometheus documentation:
+    ## https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config. As scrape configs are
+    ## appended, the user is responsible to make sure it is valid. Note that using this feature may expose the possibility
+    ## to break upgrades of Prometheus. It is advised to review Prometheus release notes to ensure that no incompatible
+    ## scrape configs are going to break Prometheus after the upgrade.
+    ##
+    ## The scrape configuraiton example below will find master nodes, provided they have the name .*mst.*, relabel the
+    ## port to 2379 and allow etcd scraping provided it is running on all Kubernetes master nodes
+    ##
+    additionalScrapeConfigs:
+      # collect metrics node-exporter running on the master nodes
+      - job_name: kubernetes-master-node-exporter
+        dns_sd_configs:
+        - names:
+          - master.cfcr.internal
+          port: 9110
+          type: A
+        relabel_configs:
+        # replace nodename BOSH generated UUID with IP. A IP is more static
+        - source_labels:
+          - __address__
+          regex: ([^:]+)(?::\d+)?
+          replacement: "${1}"
+          action: replace
+          target_label: nodename
+        - source_labels:
+          - label_example_com_ci_monitoring
+          action: replace
+          regex: (.*)
+          replacement: "[% ci_cluster_id %]"
+          target_label: label_example_com_ci_monitoring
+        # collect metrics node-exporter running on the worker nodes as pods
+      - job_name: kubernetes-worker-node-exporter
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_namespace
+          regex: pks-system
+          action: keep
+        - source_labels:
+          - __meta_kubernetes_pod_label_app
+          regex: node-exporter
+          action: keep
+        - source_labels:
+          - __meta_kubernetes_pod_ip
+          - __meta_kubernetes_pod_container_port_number
+          action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: "${1}:${2}"
+          target_label: __address__
+       # Expose 'instance' as host ip instead of pod ip as that one can change
+       #
+       # Some node exporter dashboards assume that the 'instance' label
+       # is used used to identify the host that metrics are collected on
+       #
+       # Use port 0 to show that this instance is not really
+       # running on the specific port
+        - source_labels:
+          - __meta_kubernetes_pod_host_ip
+          action: replace
+          regex: (.+)
+          replacement: "${1}:0"
+          target_label: instance
+        # Use IP as nodename as in PKS the nodesnames are changing when a node is
+        # being recreated. Using the IP should help with correlation of historical
+        # data as IPs of BOSH deployments are pretty static
+        - source_labels:
+          - __meta_kubernetes_pod_host_ip
+          action: replace
+          target_label: nodename
+        - source_labels:
+          - label_example_com_ci_monitoring
+          action: replace
+          regex: (.*)
+          replacement: "[% ci_cluster_id %]"
+          target_label: label_example_com_ci_monitoring
+    additionalAlertRelabelConfigs:
+    - source_labels:
+        - label_example_com_ci_cluster
+      action: replace
+      regex: (.*)
+      replacement: "[% ci_cluster_id %]"
+      target_label: __tmp_monitoring
+    - source_labels:
+       - namespace
+      regex: (.+)
+      replacement: "NS-${1}-[% ci_cluster %]"
+      target_label: __tmp_monitoring
+      action: replace
+    - source_labels:
+        - label_example_com_ci_monitoring
+      action: replace
+      regex: (.+)
+      target_label: __tmp_monitoring
+    - source_labels:
+        - __tmp_monitoring
+      action: replace
+      regex: (.*)
+      replacement: "$1"
+      target_label: label_example_com_ci_monitoring
