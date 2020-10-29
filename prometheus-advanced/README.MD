@@ -1,9 +1,11 @@
-Recently, we've (me and my teammate Markus) worked with a customer on a Kubernetes monitoring solution where we had to fulfil the following requirements:
-1. Deploy [Prometheus](https://prometheus.io) with easy lifecycling in mind. What I mean by easy lifecycling is upgrading Prometheus instances with minimal effort and have reproducable deployments 
+# Prometheus configuration with custom alert labels for platform and application level alerts
+
+Recently, we've (me and my teammate Markus) worked with a customer on a Kubernetes monitoring solution where we had to fulfill the following requirements:
+1. Deploy [Prometheus](https://prometheus.io) with easy lifecycling in mind. What I mean by easy life-cycling is upgrading Prometheus instances with minimal effort and have reproducable deployments 
 1. Have an initial set of alerting rules in place to cover basic platform & app monitoring needs
 1. Forward alerts to [IBM's Tivoli Netcool/OMNIbus](https://www.ibm.com/support/knowledgecenter/SSSHTQ/landingpage/NetcoolOMNIbus.html) with a label that uniquely identifies the source of the alert
 
-In this article, we will talk about how we came up with a design to fullfil these requirements agobe.
+In this article, we will talk about how we came up with a design to fulfill these requirements above.
 We will not cover Prometheus fundamental knowledge in this article, there are enough sources on the web to learn the basics by yourself.
 
 All the files that are referred to in this article can be found [here](https://github.com/mcelep/blog/tree/master/prometheus-advanced).
@@ -33,7 +35,7 @@ Image below captures the overall system design.
 
 ![System overall design](system-overall.png)
 
-Overall goal is to differentiate between platform level alerts vs alerts that would originate from workload that runs on the cluster i.e. application alerts. Team(s) that are responsible for operating K8S clusters are typically different than teams which run workloads on those clusters. So for making sure that alerts can be routed to the right teams, we need some identifiers that can be used on Tivoli Netcool/OMNIbus side to make the right routing call. We will not go into details how Tivoli Netcool/OMNIbus can be configured to route alerts to different teams. 
+Overall goal is to differentiate between platform level alerts vs alerts that would originate from workload that runs on the cluster i.e. application alerts. Team(s) that are responsible for operating K8S clusters are typically different than teams which run workloads on those clusters. So for making sure that alerts can be routed to the right teams, we need some identifiers that can be used on Tivoli Netcool/OMNIbus side to make the right routing call. We will not go into details how Tivoli Netcool/OMNIbus can be configured to route alerts to different teams.
 
 As Tivoli Netcool/OMNIbus can receive http calls, we will be using webhooks to send alerts from [Prometheus/Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/) to Tivoli Netcool/OMNIbus. The only thing that will be required for making the right routing on Tivoli side is a label that we will send as a part of alert data. The key for this label is decided as **example.com/ci_monitoring**.
 
@@ -41,7 +43,7 @@ As Tivoli Netcool/OMNIbus can receive http calls, we will be using webhooks to s
 [This file](./prometheus-operator/values.yml.j2) includes the custom configuration we came up with for the Prometheus Operator deployment. It's a jinja template file, and the reason for that is we replace certain values in that template depending on target K8S cluster such as cluster-name, container image registry hostname, alert sending destinations (email, webhook). All helm charts come with a default *values.yml* file and our jinja template is based on [this file](https://github.com/prometheus-community/helm-charts/blob/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack/values.yaml).
 
 
-Prometheus operator comes with a set of Alerting rules that are [enabled by default)(https://github.com/prometheus-community/helm-charts/blob/564086af6157d2da6a9a5f086010f1cb3a93babd/charts/kube-prometheus-stack/values.yaml#L30) and due to our need of overwriting [kubernetesApps rules](https://github.com/prometheus-community/helm-charts/blob/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack/templates/prometheus/rules-1.14/kubernetes-apps.yaml),  the following section in values file is included to disable creation of **KubernetApps** rules:
+Prometheus operator comes with a set of Alerting rules that are [enabled by default)(https://github.com/prometheus-community/helm-charts/blob/564086af6157d2da6a9a5f086010f1cb3a93babd/charts/kube-prometheus-stack/values.yaml#L30) and due to our need of overwriting [kubernetesApps rules](https://github.com/prometheus-community/helm-charts/blob/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack/templates/prometheus/rules-1.14/kubernetes-apps.yaml),  the following section in values file is included to disable creation of **KubernetesApps** rules:
 ```yaml
 defaultRules:
   create: true
@@ -79,10 +81,10 @@ additionalPrometheusRules:
           labels:
             severity: critical
 ```
-The rules are based on the original [kubernetes-apps.yaml](https://github.com/helm/charts/blob/b9278fa98cef543f5473eb55160eaf45833bc74e/stable/prometheus-operator/templates/prometheus/rules-1.14/kubernetes-apps.yaml) and we add two versions for each rule. One for application namespaces and one for system namespaces. 
-For controlling what a system namespace is we use a jinja placeholder: ```[% system_namespaces_regex %]``` and the value we've used for this placeholder is: ```default|kube-system|pks-system|monitoring```. (see the file under ```vars/test.yaml`` for all values that are overriden)
+The rules are based on the original [kubernetes-apps.yaml](https://github.com/helm/charts/blob/b9278fa98cef543f5473eb55160eaf45833bc74e/stable/prometheus-operator/templates/prometheus/rules-1.14/kubernetes-apps.yaml) and we add two versions for each rule. One for application namespaces and one for system namespaces.
+For controlling what a system namespace is we use a jinja placeholder: ```[% system_namespaces_regex %]``` and the value we've used for this placeholder is: ```default|kube-system|pks-system|monitoring```. (see the file under ```vars/test.yaml`` for all values that are overwritten)
 
-We add labels to Prometheus alerts that are sent from AlertManageer to Tivoli side and we make sure that alert queries that are relevant for applications always include that label. In our configuration, this label is called *label_example_com_ci_monitoring*.
+We add labels to Prometheus alerts that are sent from AlertManager to Tivoli side and we make sure that alert queries that are relevant for applications always include that label. In our configuration, this label is called *label_example_com_ci_monitoring*.
 
 For system relevant alerts, we include a label to represent Cluster ID which is again controlled by a jinja placeholder ```[% ci_cluster_id %]```.  Here is the relevant section:
 ```yaml
@@ -102,7 +104,7 @@ For system relevant alerts, we include a label to represent Cluster ID which is 
 For workload alerts, we have a mechanism to automatically populate *label_example_com_ci_monitoring* on the fly based on cluster and namespace. Moreover, if there's an existing label on the metric with key *label_example_com_ci_monitoring*, it will be kept as is. In the next section we explain how this mechanism works.
 
 ### Additional Alert Relabellings
-In helm values file, in a section with path *prometheus.prometheusSpec.externalLabels* , we have some additional alert relabeling that we introduced for putting some extra labels on each alert triggerred from this Prometheus instance. We thought K8S cluster ID, which is controlled by a jinja placeholder(``` [% ci_cluster_id %] ```) , could bring a lot of benefit in the future to denote the source of an alert. The key for this label is set as *label_example_com_ci_cluster* and not to be mixed up with  *label_example_com_ci_monitoring*. Purpose of this label is to always show the source K8S platform, independent from whether it's a system or namespace/workload alert. The relevant configuration looks like this:
+In helm values file, in a section with path *prometheus.prometheusSpec.externalLabels* , we have some additional alert relabeling that we introduced for putting some extra labels on each alert triggered from this Prometheus instance. We thought K8S cluster ID, which is controlled by a jinja placeholder(``` [% ci_cluster_id %] ```) , could bring a lot of benefit in the future to denote the source of an alert. The key for this label is set as *label_example_com_ci_cluster* and not to be mixed up with  *label_example_com_ci_monitoring*. Purpose of this label is to always show the source K8S platform, independent from whether it's a system or namespace/workload alert. The relevant configuration looks like this:
 
 ```yaml
   prometheusSpec:
@@ -151,7 +153,7 @@ In this context, it would be good to remind you that there's a conversion proces
 
 ### Persistency
 
-Prometheus Operator helm chart comes with persistent volumes disabled by default. In order to enable and configure persistent volumes, the following section is used. 
+Prometheus Operator helm chart comes with persistent volumes disabled by default. In order to enable and configure persistent volumes, the following section is used:
 ```yaml
       volumeClaimTemplate:
         spec:
@@ -161,7 +163,7 @@ Prometheus Operator helm chart comes with persistent volumes disabled by default
               storage: 50Gi
 ```
 
-This section is avaiable under path: *prometheus.prometheusSpec.storageSpec*. We have not specified a storage class and we assume that there is a default storageclass configured for the cluster. Alternatively, in the *spec* section, you can specify a storage class  as shown below:
+This section is available under path: *prometheus.prometheusSpec.storageSpec*. We have not specified a storage class and we assume that there is a default StorageClass configured for the cluster. Alternatively, in the *spec* section, you can specify a storage class  as shown below:
 ```yaml 
       volumeClaimTemplate:
         spec:
@@ -205,7 +207,7 @@ During testing purposes, if you want to avoid sending alerts to third parties, y
 
 ### Dead man's switch 
 
-If prometheus gets deployed on the K8S platform that you want to observe, you risk not gettting any alerts because Prometheus could potentially not run if platform does not run properly or at all. In order to fix issue, a common pattern have Prometheus send an alert periodically (*a heartbeat* as it's referred in some other domains) to another monitoring platform that operates in a different fault domain. This pattern is often referred as 'Dead man's switch' and it's controlled by the following section in the [general rules yaml](https://github.com/prometheus-community/helm-charts/blob/b643f58714a063e5a0ddf6832cd00ed29c0f4fab/charts/kube-prometheus-stack/templates/prometheus/rules-1.14/general.rules.yaml):
+If prometheus gets deployed on the K8S platform that you want to observe, you risk not getting any alerts because Prometheus could potentially not run if platform does not run properly or at all. In order to fix issue, a common pattern have Prometheus send an alert periodically (*a heartbeat* as it's referred in some other domains) to another monitoring platform that operates in a different fault domain. This pattern is often referred as 'Dead man's switch' and it's controlled by the following section in the [general rules yaml](https://github.com/prometheus-community/helm-charts/blob/b643f58714a063e5a0ddf6832cd00ed29c0f4fab/charts/kube-prometheus-stack/templates/prometheus/rules-1.14/general.rules.yaml):
 ```yaml
     - alert: Watchdog
       annotations:
@@ -243,7 +245,7 @@ This playbook will talk to the localhost from which you execute the ```ansible-p
 
 ### Install Prometheus
 
-Run the following command to install and confgiure Prometheus and its dependencies:
+Run the following command to install and configure Prometheus and its dependencies:
 ```yaml
 ansible-playbook -v playbooks/prometheus-operator.yml -i inventory-local.yaml --extra-vars @vars/test.yml
 ```
@@ -263,7 +265,7 @@ kubectl create ns test
 kubectl -n test create deployment test --image=no-such-image
 ```
 
-Soon you should have some alerts that are in pending state and there should be after the configured amount of time (and for KubePodNotReady it's set to 15 minutes in *values.yml.j2* file) alerts that are firing with the right labels.
+Soon you should have some alerts that are in pending state and there should be after the configured amount of time (and for *KubePodNotReady* it's set to 15 minutes in *values.yml.j2* file) alerts that are firing with the right labels.
 
 When we check the logs of the webhook listener container, we see that following data was received:
 ```json
@@ -291,4 +293,3 @@ When we check the logs of the webhook listener container, we see that following 
 ```
 
 Namespace *test*, does not have a label with key **example.com/ci_monitoring** so label *label_example_com_ci_monitoring* was auto generated based on our relabelling configuration and thus got the value which is a combination of cluster id and namespace. And that's it! We have our end to end solution in action.
-
