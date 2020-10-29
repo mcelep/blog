@@ -6,6 +6,8 @@ Recently, we've (me and my teammate Markus) worked with a customer on a Kubernet
 In this article, we will talk about how we came up with a design to fullfil these requirements agobe.
 We will not cover Prometheus fundamental knowledge in this article, there are enough sources on the web to learn the basics by yourself.
 
+All the files that are referred to in this article can be found [here](https://github.com/mcelep/blog/tree/master/prometheus-advanced).
+
 
 ## Helm Chart: kube-prometheus-stack
 For taking care of the first two requirements,[kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack) can be used. This helm chart was formerly named [prometheus-operator](https://github.com/helm/charts/tree/b9278fa98cef543f5473eb55160eaf45833bc74e/stable/prometheus-operator). You can find the details of the kube-prometheus (which includes the Prometheus operator,as well as other useful bits) [here](https://github.com/prometheus-operator/kube-prometheus).
