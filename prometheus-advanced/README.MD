@@ -8,13 +8,13 @@ We will not cover Prometheus fundamental knowledge in this article, there are en
 
 
 ## Helm Chart: kube-prometheus-stack
-For taking care of the first two requirements,[kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) can be used. This helm chart was formerly named [prometheus-operator](https://github.com/helm/charts/tree/master/stable/prometheus-operator). You can find the details of the kube-prometheus (which includes the Prometheus operator,as well as other useful bits) [here](https://github.com/prometheus-operator/kube-prometheus).
+For taking care of the first two requirements,[kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack) can be used. This helm chart was formerly named [prometheus-operator](https://github.com/helm/charts/tree/b9278fa98cef543f5473eb55160eaf45833bc74e/stable/prometheus-operator). You can find the details of the kube-prometheus (which includes the Prometheus operator,as well as other useful bits) [here](https://github.com/prometheus-operator/kube-prometheus).
 
 [Helm charts](https://helm.sh/docs/topics/charts/) are one of the most common ways to deploy software on Kubernetes these days and having an [operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator) for software also comes in handy for operations such as upgrading software version,backup/restore and many other actions that would be typically triggered by administrator of software manually on day 2.
 
 ### Prometheus rulez :)
 The other interesting thing that comes with **kube-prometheus-stack** helm chart is a set of rules that covers most common needs for Kubernetes platforms. 
-The rules are listed [here](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/templates/prometheus/rules) and Prometheus rules are simply wrapped inside a [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) with the following kind: 
+The rules are listed [here](https://github.com/prometheus-community/helm-charts/tree/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack/templates/prometheus/rules-1.14) and Prometheus rules are simply wrapped inside a [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) with the following kind: 
 ```
 apiVersion: monitoring.coreos.com/v1 
 kind: PrometheusRule
@@ -22,7 +22,7 @@ kind: PrometheusRule
 
 One should bear in mind that, although these rules are good to start with, typically a team responsible for managing K8S platforms will most probably decide to tweak those rules, add new ones, remove some of them over time as they see fit.
 
-Rules listed [here](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/templates/prometheus/rules) cover two main themes for alerts. Most of rules are for monitoring a Kubernetes platform itself and meant to be taken care by operators of the platform. However, there are also rules concerning workloads running on  K8s, e.g. [kubernetes-apps.yaml](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/templates/prometheus/rules-1.14/kubernetes-apps.yaml). Alerts that are triggered due to platform events should be routed differently than workload alerts and this is why we need to differentiate between platform/system vs. workload. In other words, different individuals/team should be alerted based on Prometheus rules. In the rest of this post, we will go into details of how Prometheus was configured to always include a custom label with the right value i.e. Platform ID or Workload ID.
+Rules listed [here](https://github.com/prometheus-community/helm-charts/tree/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack/templates/prometheus/rules-1.14) cover two main themes for alerts. Most of rules are for monitoring a Kubernetes platform itself and meant to be taken care by operators of the platform. However, there are also rules concerning workloads running on  K8s, e.g. [kubernetes-apps.yaml](https://github.com/prometheus-community/helm-charts/blob/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack/templates/prometheus/rules-1.14/kubernetes-apps.yaml). Alerts that are triggered due to platform events should be routed differently than workload alerts and this is why we need to differentiate between platform/system vs. workload. In other words, different individuals/team should be alerted based on Prometheus rules. In the rest of this post, we will go into details of how Prometheus was configured to always include a custom label with the right value i.e. Platform ID or Workload ID.
 
 
 ## Solution Design
@@ -36,10 +36,10 @@ Overall goal is to differentiate between platform level alerts vs alerts that wo
 As Tivoli Netcool/OMNIbus can receive http calls, we will be using webhooks to send alerts from [Prometheus/Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/) to Tivoli Netcool/OMNIbus. The only thing that will be required for making the right routing on Tivoli side is a label that we will send as a part of alert data. The key for this label is decided as **example.com/ci_monitoring**.
 
 ### Rules Configuration
-[This file](./prometheus-operator/values.yml.j2) includes the custom configuration we came up with for the Prometheus Operator deployment. It's a jinja template file, and the reason for that is we replace certain values in that template depending on target K8S cluster such as cluster-name, container image registry hostname, alert sending destinations (email, webhook). All helm charts come with a default *values.yml* file and our jinja template is based on [this file](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml).
+[This file](./prometheus-operator/values.yml.j2) includes the custom configuration we came up with for the Prometheus Operator deployment. It's a jinja template file, and the reason for that is we replace certain values in that template depending on target K8S cluster such as cluster-name, container image registry hostname, alert sending destinations (email, webhook). All helm charts come with a default *values.yml* file and our jinja template is based on [this file](https://github.com/prometheus-community/helm-charts/blob/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack/values.yaml).
 
 
-Prometheus operator comes with a set of Alerting rules that are [enabled by default)(https://github.com/prometheus-community/helm-charts/blob/564086af6157d2da6a9a5f086010f1cb3a93babd/charts/kube-prometheus-stack/values.yaml#L30) and due to our need of overwriting [kubernetesApps rules]((https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/templates/prometheus/rules-1.14/kubernetes-apps.yaml)),  the following section in values file is included to disable creation of **KubernetApps** rules:
+Prometheus operator comes with a set of Alerting rules that are [enabled by default)(https://github.com/prometheus-community/helm-charts/blob/564086af6157d2da6a9a5f086010f1cb3a93babd/charts/kube-prometheus-stack/values.yaml#L30) and due to our need of overwriting [kubernetesApps rules](https://github.com/prometheus-community/helm-charts/blob/a3e6d68b12284f26d216250b57b2240cc9519224/charts/kube-prometheus-stack/templates/prometheus/rules-1.14/kubernetes-apps.yaml),  the following section in values file is included to disable creation of **KubernetApps** rules:
 ```yaml
 defaultRules:
   create: true
@@ -77,7 +77,7 @@ additionalPrometheusRules:
           labels:
             severity: critical
 ```
-The rules are based on the original [kubernetes-apps.yaml](https://github.com/helm/charts/blob/master/stable/prometheus-operator/templates/prometheus/rules-1.14/kubernetes-apps.yaml) and we add two versions for each rule. One for application namespaces and one for system namespaces. 
+The rules are based on the original [kubernetes-apps.yaml](https://github.com/helm/charts/blob/b9278fa98cef543f5473eb55160eaf45833bc74e/stable/prometheus-operator/templates/prometheus/rules-1.14/kubernetes-apps.yaml) and we add two versions for each rule. One for application namespaces and one for system namespaces. 
 For controlling what a system namespace is we use a jinja placeholder: ```[% system_namespaces_regex %]``` and the value we've used for this placeholder is: ```default|kube-system|pks-system|monitoring```. As mentioned 
 
 We add labels to Prometheus alerts that are sent from AlertManageer to Tivoli side and we make sure that alert queries that are relevant for applications always include that label. In our configuration, this label is called *label_example_com_ci_monitoring*.
