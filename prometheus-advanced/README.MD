@@ -275,27 +275,27 @@ Soon you should have some alerts that are in pending state and there should be a
 
 When we check the logs of the webhook listener container, we see that following data was received:
 ```json
-		{
-			"status": "firing",
-			"labels": {
-				"__tmp_monitoring": "NS-test-CL-XYZ",
-				"alertname": "KubePodNotReady",
-				"label_example_com_ci_cluster": "CL-XYZ",
-				"label_example_com_ci_monitoring": "NS-test-CL-XYZ",
-				"namespace": "test",
-				"pod": "test-7c8844b6fb-kbj8l",
-				"prometheus": "monitoring/platform-kube-prometheus-s-prometheus",
-				"severity": "critical"
-			},
-			"annotations": {
-				"message": "Pod test/test-7c8844b6fb-kbj8l has been in a non-ready state for longer than 15 minutes.",
-				"runbook_url": "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodnotready"
-			},
-			"startsAt": "2020-10-29T10:49:18.473Z",
-			"endsAt": "0001-01-01T00:00:00Z",
-			"generatorURL": "http://prometheus.monitoring.k8s.example.com/graph?g0.expr=sum+by%28namespace%2C+pod%2C+label_example_com_ci_monitoring%29+%28max+by%28namespace%2C+pod%2C+label_example_com_ci_monitoring%29+%28kube_pod_status_phase%7Bjob%3D%22kube-state-metrics%22%2Cnamespace%21~%22default%7Ckube-system%7Cpks-system%7Cmonitoring%22%2Cphase%3D~%22Pending%7CUnknown%22%7D%29+%2A+on%28namespace%2C+pod%29+group_left%28owner_kind%29+max+by%28namespace%2C+pod%2C+owner_kind%2C+label_example_com_ci_monitoring%29+%28kube_pod_owner%7Bowner_kind%21%3D%22Job%22%7D%29%29+%3E+0\\u0026g0.tab=1",
-			"fingerprint": "0b23d99b9740b21e"
-		}
+{
+  "status": "firing",
+  "labels": {
+    "__tmp_monitoring": "NS-test-CL-XYZ",
+    "alertname": "KubePodNotReady",
+    "label_example_com_ci_cluster": "CL-XYZ",
+    "label_example_com_ci_monitoring": "NS-test-CL-XYZ",
+    "namespace": "test",
+    "pod": "test-7c8844b6fb-kbj8l",
+    "prometheus": "monitoring/platform-kube-prometheus-s-prometheus",
+    "severity": "critical"
+  },
+  "annotations": {
+    "message": "Pod test/test-7c8844b6fb-kbj8l has been in a non-ready state for longer than 15 minutes.",
+    "runbook_url": "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodnotready"
+  },
+  "startsAt": "2020-10-29T10:49:18.473Z",
+  "endsAt": "0001-01-01T00:00:00Z",
+  "generatorURL": "http://prometheus.monitoring.k8s.example.com/graph?g0.expr=sum+by%28namespace%2C+pod%2C+label_example_com_ci_monitoring%29+%28max+by%28namespace%2C+pod%2C+label_example_com_ci_monitoring%29+%28kube_pod_status_phase%7Bjob%3D%22kube-state-metrics%22%2Cnamespace%21~%22default%7Ckube-system%7Cpks-system%7Cmonitoring%22%2Cphase%3D~%22Pending%7CUnknown%22%7D%29+%2A+on%28namespace%2C+pod%29+group_left%28owner_kind%29+max+by%28namespace%2C+pod%2C+owner_kind%2C+label_example_com_ci_monitoring%29+%28kube_pod_owner%7Bowner_kind%21%3D%22Job%22%7D%29%29+%3E+0\\u0026g0.tab=1",
+  "fingerprint": "0b23d99b9740b21e"
+}
 ```
 
 Namespace *test*, does not have a label with key **example.com/ci_monitoring** so label *label_example_com_ci_monitoring* was auto generated based on our relabelling configuration and thus got the value which is a combination of cluster id and namespace. And that's it! We have our end to end solution in action.
