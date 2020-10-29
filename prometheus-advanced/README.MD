@@ -7,7 +7,8 @@ status: draft
 # Prometheus configuration with custom alert labels for platform and application level alerts
 
 Recently, we've (me and my teammate Markus) worked with a customer on a Kubernetes monitoring solution where we had to fulfill the following requirements:
-1. Deploy [Prometheus](https://prometheus.io) with easy lifecycling in mind. What I mean by easy life-cycling is upgrading Prometheus instances with minimal effort and have reproducable deployments 
+
+1. Deploy [Prometheus](https://prometheus.io) with easy life-cycling in mind. What I mean by easy life-cycling is upgrading Prometheus instances with minimal effort and have reproducible deployments 
 1. Have an initial set of alerting rules in place to cover basic platform & app monitoring needs
 1. Forward alerts to [IBM's Tivoli Netcool/OMNIbus](https://www.ibm.com/support/knowledgecenter/SSSHTQ/landingpage/NetcoolOMNIbus.html) with a label that uniquely identifies the source of the alert
 
