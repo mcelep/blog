@@ -1,4 +1,4 @@
-Recently, we've worked with a customer on a Kubernetes monitoring solution where we had to fulfil the following requirements:
+Recently, we've (me and my teammate Markus) worked with a customer on a Kubernetes monitoring solution where we had to fulfil the following requirements:
 1. Deploy [Prometheus](https://prometheus.io) with easy lifecycling in mind. What I mean by easy lifecycling is upgrading Prometheus instances with minimal effort and have reproducable deployments 
 1. Have an initial set of alerting rules in place to cover basic platform & app monitoring needs
 1. Forward alerts to [IBM's Tivoli Netcool/OMNIbus](https://www.ibm.com/support/knowledgecenter/SSSHTQ/landingpage/NetcoolOMNIbus.html) with a label that uniquely identifies the source of the alert
@@ -47,7 +47,7 @@ defaultRules:
     kubernetesApps: false
 ```
 
-After that,we start adding our own version of the *kubernetesApps* rules:
+After that,we start adding our own version of the *kubernetesApps* rules, and the following is an example excerpt:
 ```yaml
 ## Provide custom recording or alerting rules to be deployed into the cluster.
 additionalPrometheusRules:
@@ -78,7 +78,7 @@ additionalPrometheusRules:
             severity: critical
 ```
 The rules are based on the original [kubernetes-apps.yaml](https://github.com/helm/charts/blob/b9278fa98cef543f5473eb55160eaf45833bc74e/stable/prometheus-operator/templates/prometheus/rules-1.14/kubernetes-apps.yaml) and we add two versions for each rule. One for application namespaces and one for system namespaces. 
-For controlling what a system namespace is we use a jinja placeholder: ```[% system_namespaces_regex %]``` and the value we've used for this placeholder is: ```default|kube-system|pks-system|monitoring```. As mentioned 
+For controlling what a system namespace is we use a jinja placeholder: ```[% system_namespaces_regex %]``` and the value we've used for this placeholder is: ```default|kube-system|pks-system|monitoring```. (see the file under ```vars/test.yaml`` for all values that are overriden)
 
 We add labels to Prometheus alerts that are sent from AlertManageer to Tivoli side and we make sure that alert queries that are relevant for applications always include that label. In our configuration, this label is called *label_example_com_ci_monitoring*.
 
@@ -240,6 +240,8 @@ This playbook will talk to the localhost from which you execute the ```ansible-p
 
 
 ### Install Prometheus
+
+Run the following command to install and confgiure Prometheus and its dependencies:
 ```yaml
 ansible-playbook -v playbooks/prometheus-operator.yml -i inventory-local.yaml --extra-vars @vars/test.yml
 ```
@@ -253,7 +255,7 @@ kubectl expose deployment/webhook --port 8080
 
 
 ### Create a test app 
-Run the followin commands to create a namespace called *test* and create a deployment called *test*
+Run the following commands to create a namespace called *test* and create a deployment called *test*
 ```yaml
 kubectl create ns test
 kubectl -n test create deployment test --image=no-such-image
@@ -287,3 +289,4 @@ When we check the logs of the webhook listener container, we see that following 
 ```
 
 Namespace *test*, does not have a label with key **example.com/ci_monitoring** so label *label_example_com_ci_monitoring* was auto generated based on our relabelling configuration and thus got the value which is a combination of cluster id and namespace. And that's it! We have our end to end solution in action.
+
