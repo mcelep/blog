@@ -1,0 +1,30 @@
+---
+- name: Deploy prometheus operator with helm 
+  hosts: localhost
+  gather_facts: no
+  vars:
+    helm_chart: prometheus-community/kube-prometheus-stack
+    helm_chart_version: 10.1.1
+    helm_deployment_name: platform
+    namespace: monitoring
+  tasks:
+    - name: render values
+      template:
+        src: ../prometheus-operator/values.yml.j2
+        dest: ../prometheus-operator/values-rendered.yml
+        variable_start_string: "[%"
+        variable_end_string: "%]"
+    - name: helm_repo_add
+      shell: |
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts && \
+        helm repo add stable https://charts.helm.sh/stable         
+    - name: update_helm_repo
+      shell: |
+        helm repo update
+    - name: install_deployment
+      shell: |
+        helm upgrade {{ helm_deployment_name }} {{ helm_chart }} \
+          --version {{ helm_chart_version }} \
+          -n {{ namespace }} \
+          -f ../prometheus-operator/values-rendered.yml \
+          --install --create-namespace

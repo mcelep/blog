@@ -1,0 +1,7 @@
+controller:
+  name: controller
+  publishService:
+    enabled: true
+
+podSecurityPolicy:
+  enabled: true

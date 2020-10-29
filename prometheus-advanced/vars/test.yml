@@ -1,0 +1,8 @@
+ci_cluster_id : "CL-XYZ"
+ingress_url_suffix: monitoring.k8s.example.com
+
+alertmanager_webhook_url: http://webhook:8080
+alertmanager_smtp_to: someone@someone
+alertmanager_smtp_from: someone@someone
+alertmanager_smtp_host: smtp.domain:25
+system_namespaces_regex: default|kube-system|pks-system|monitoring 
