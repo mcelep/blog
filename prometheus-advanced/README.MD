@@ -1,3 +1,9 @@
+---
+title: Prometheus configuration with custom alert labels for platform and application level alerts
+tags: ['prometheus', 'kubernetes', 'cloud-native', 'monitoring', 'alert-routing', 'alerting','observability']
+status: draft
+---
+
 # Prometheus configuration with custom alert labels for platform and application level alerts
 
 Recently, we've (me and my teammate Markus) worked with a customer on a Kubernetes monitoring solution where we had to fulfill the following requirements:
@@ -33,7 +39,7 @@ Rules listed [here](https://github.com/prometheus-community/helm-charts/tree/a3e
 
 Image below captures the overall system design.
 
-![System overall design](system-overall.png)
+![System overall design](https://github.com/mcelep/blog/blob/master/prometheus-advanced/system-overall.png?raw=true)
 
 Overall goal is to differentiate between platform level alerts vs alerts that would originate from workload that runs on the cluster i.e. application alerts. Team(s) that are responsible for operating K8S clusters are typically different than teams which run workloads on those clusters. So for making sure that alerts can be routed to the right teams, we need some identifiers that can be used on Tivoli Netcool/OMNIbus side to make the right routing call. We will not go into details how Tivoli Netcool/OMNIbus can be configured to route alerts to different teams.
 
