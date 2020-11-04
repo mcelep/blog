@@ -80,8 +80,7 @@ Under *policy* folder there are policy files and their corresponding unit test f
 
 Conftest provides 3 levels for rules: *deny, violation, and warn*. In our example policy file for deployments(Deployment.rego), we decided to use *warn* level and also included a descriptive name in the part that follows *warn_*. for example ```warn_at_least_2_replicas[msg]```. The variable which is called *msg* in this example, is used as an output variable. In our rules, the value of *msg* is static, it does not depend on data this rule receives but you might want to make the value of *msg* dynamic, to provide explanation/hints about what part of input data fails to comply with the rule.
 
-There is an accompanying unit test provided in the same folder as policy file.
-
+There is an accompanying unit test *deployment_test.rego* provided in the same folder as the policy file *deployment.rego*. Data used in unit tests is also embedded into the unit test file. For example, for tests which target rule *warn_at_least_2_replicas* , there are 2 variables called *deployment_1_replica* and *deployment_2_replica* which contain the relevant data. Embedding large amount test data into the unit test file itself is not an ideal solution though, that part should be improved. In the *helpers* there is a python script which was written to convert yaml into json while removing empty elements as they proved to be problematic for the rego compiler.
 
 #### Running unit tests
 
