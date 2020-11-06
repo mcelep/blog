@@ -12,7 +12,7 @@ But how can you enforce your company's K8S best practices? How can you create 'p
 
 OPA comes with a language called [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) to author policies efficiently and other than Rego, there are a number of tools & components in OPA to make use of policies easier & efficient.
 
-## Different options to enforce policies
+## Different options to enform policies & run policy checks
 
 We see several options to enforce policies and inform users about conformance to policies.
 
