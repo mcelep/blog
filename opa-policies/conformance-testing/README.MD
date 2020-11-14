@@ -1,3 +1,8 @@
+---
+title: Enforcing policies in Kubernetes
+tags: ['kubernetes', 'opa', 'rego', 'policy', 'policy enforcement']
+status: draft
+---
 # Enforcing policies in Kubernetes
 
 Kubernetes(K8S) has established itself as the go-to platform for container based workloads and many companies have either already started or going to start soon migrating their workloads onto Kubernetes.
