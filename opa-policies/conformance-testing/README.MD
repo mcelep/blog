@@ -6,6 +6,7 @@ Kubernetes offers so many capabilities out of box, and it exposes many infrastru
 
 But how can you enforce your company's K8S best practices? How can you create 'policies' that covers security and high availability concerns? How can you govern the behavior of a software service?
 
+*All the relevant files can be found in [this git repo](https://github.com/mcelep/blog/tree/master/opa-policies/conformance-testing).*
 ## Enter Open Policy Agent(OPA)
 
 [Open Policy Agent(OPA)](https://www.openpolicyagent.org/) is a Cloud Native Computing Foundation project and it aims at solving 'policy enforcement' problem across the Cloud-Native stack(Kubernetes, Docker, Envoy, Terraform,etc.).
@@ -26,7 +27,7 @@ OPA Gatekeeper can (as of 30.10.2020) either deny a admission request (optionall
 
 Using *Admission Controllers* brings a binary approach to accepting changes on API resources on a K8S cluster. This helps to make sure no non-policy-conformal workload runs on the platform but it misses to differentiate between recommended vs. obligatory practices. This is where a 'report card' based approach comes handy.
 
-### Report cards
+### Visualization / Report cards
 
 Creating a 'conformance' report for workloads running on K8S clusters is a good way to increase awareness amongst application teams about how their applications fulfill the requirements. In our professional services engagements which includes application  commissioning into production, we typically prepare a custom "Production Readiness Checklist" document that includes both obligatory as well as recommended items. There might be certain points in such a list that pretty much universal but some are specific to customers due to needs such as high availability, performance or regulatory requirements (e.g. Financial Service regulations).
 
@@ -34,7 +35,7 @@ Creating a report card that is generated programmatically upon demand (or period
 
 [Polaris OS project](https://github.com/FairwindsOps/polaris) comes with such a feature out of the box, see the image below:
 
-![report](dashboard-screenshot.png)
+![report]([dashboard-screenshot.png](https://github.com/mcelep/blog/blob/master/opa-policies/conformance-testing/dashboard-screenshot.png?raw=true))
 
 When creating such a report, displaying not only failed policy checks but also providing some explanations about why such a policy rule was created and how to fix that issue (typically by providing a link to an internal wiki page), will be much appreciated by readers of the report.
 
