@@ -34,7 +34,7 @@ Using *Admission Controllers* brings a binary approach to accepting changes on A
 
 ### Visualization / Report cards
 
-Creating a 'conformance' report for workloads running on K8S clusters is a good way to increase awareness amongst application teams about how their applications fulfill the requirements. In our professional services engagements which includes application  commissioning into production, we typically prepare a custom "Production Readiness Checklist" document that includes both obligatory as well as recommended items. There might be certain points in such a list that pretty much universal but some are specific to customers due to needs such as high availability, performance or regulatory requirements (e.g. Financial Service regulations).
+Creating a 'conformance' report for workloads running on K8S clusters is a good way to increase awareness among application teams about how their applications fulfill the requirements. In our professional services engagements which includes application  commissioning into production, we typically prepare a custom "Production Readiness Checklist" document that includes both obligatory as well as recommended items. There might be certain points in such a list that pretty much universal but some are specific to customers due to needs such as high availability, performance or regulatory requirements (e.g. Financial Service regulations).
 
 Creating a report card that is generated programmatically upon demand (or periodically) and showing this report to users in a visually pleasing way could be very helpful in many large organizations that has many K8S applications.
 
