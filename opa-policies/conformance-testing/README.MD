@@ -40,7 +40,7 @@ Creating a report card that is generated programmatically upon demand (or period
 
 [Polaris OS project](https://github.com/FairwindsOps/polaris) comes with such a feature out of the box, see the image below:
 
-![report]([dashboard-screenshot.png](https://github.com/mcelep/blog/blob/master/opa-policies/conformance-testing/dashboard-screenshot.png?raw=true)
+![report](https://github.com/mcelep/blog/blob/master/opa-policies/conformance-testing/dashboard-screenshot.png?raw=true)
 
 When creating such a report, displaying not only failed policy checks but also providing some explanations about why such a policy rule was created and how to fix that issue (typically by providing a link to an internal wiki page), will be much appreciated by readers of the report.
 
