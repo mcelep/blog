@@ -24,8 +24,9 @@ We will focus on a couple of different provider combinations in this blog post. 
 
 1. **vSphere plugin**: vSphere has its own volume snapshot plugin: [velero-plugin-for-vsphere](https://github.com/vmware-tanzu/velero-plugin-for-vsphere). This plugin backups kubernetes persistent volumes to a S3 bucket.
    
+## Velero in action
 
-## Velero with Restic
+### 1) Velero with Restic
 
 In this section, we will create a step-by-step tutorial to:
 
@@ -35,13 +36,13 @@ In this section, we will create a step-by-step tutorial to:
 - Delete the application
 - Restore the application from the backup
 
-### Create namespace velero
+#### Create namespace velero
 We will install velero server side components into a namespace called *velero*, let's create a new namespace:
 ```bash
 kubectl create ns velero
 ```
 
-### Create a Kubernetes secret for a AWS S3 bucket
+#### Create a Kubernetes secret for a AWS S3 bucket
 
 Add your s3 Bucket access credential to `creds.txt` file. Replace the placeholders *<aws_access_key_id>* and *<aws_secret_access_key>* with actual values and create a new K8S secret with the content of the file:
 
@@ -49,7 +50,7 @@ Add your s3 Bucket access credential to `creds.txt` file. Replace the placeholde
 kubectl -n velero create secret generic cloud-credentials --from-file=cloud=creds.txt
 ```
 
-### Install velero with Restic
+#### Install velero with Restic
 
 We  need to opt-in for Restic installation in *values.yaml* with ```deployRestic: true``` and enable privileged mode to access Hostpath by using the following parameters: ```restic.podVolumePath``` and ```restic.privileged```.
 
@@ -67,7 +68,7 @@ helm install velero vmware-tanzu/velero -f values.yaml -n velero \
 ```
 (**Note:** for TKG hostpath should be ```/var/lib/kubelet/pods```, where as for TKGI(formerly known as PKS) hostpath values should read ```/var/vcap/data/kubelet/pods```)
 
-## Create a backup && restore
+#### Create a backup && restore
 
 When using restic to backup you need to add annotations to your pods which specify the volumes to backup. See `nginx-with-pv.yaml` for an example. Here is annotation:
 
@@ -99,9 +100,17 @@ kubectl get pods -n example-app # wait till pod is running
 kubectl -n example-app exec -it "$(kubectl get pods -n example-app -o name)"   --  bash -c "cat /opt/my-pvc/hi.txt" 
 ```
 
-### Cleanup
+#### Cleanup
 
 ```bash
 kubectl delete ns velero
 kubectl delete ns example-app
 ```
+
+### 2) CSI Volume VolumeSnapshots
+
+We will cover *CSI VolumeSnapshots* based velero configuration in a different blog post.
+
+### 3) vSphere plugin
+
+We will cover *vSphere plugin* based velero configuration in a different blog post.
