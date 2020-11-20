@@ -1,9 +1,15 @@
-# Velero
+---
+title: Backup/Restore with Velero on vSphere
+tags: ['kubernetes', 'backup','velero','k8s']
+status: draft
+---
+# Backup/Restore with Velero on vSphere
 
+![velero icon](https://raw.githubusercontent.com/mcelep/blog/master/velero-1/velero.png)
 
 Velero(formerly known as Heptio Ark) is arguably the most popular backup/restore solution for Kubernetes. It was created by Heptio and Velero continues to be actively developed as an open source project. [Here](https://github.com/vmware-tanzu/velero) is the github project and [this](https://velero.io/) is the official website.
 
-In this blog post, we will present different options to backup/restore Kubernetes clusters running on vSphere and we will use [S3](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html) API based Object Store.
+In this blog post, we will present different options to backup/restore Kubernetes clusters running on vSphere with Velero and we will use [S3](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html) API based Object Store.
 
 **NOTE:** *All the files used in this article can be found on [https://github.com/mcelep/blog/tree/master/velero-1](https://github.com/mcelep/blog/tree/master/velero-1)*
 
