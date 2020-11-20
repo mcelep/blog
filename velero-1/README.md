@@ -1,5 +1,6 @@
 # Velero
 
+
 Velero(formerly known as Heptio Ark) is arguably the most popular backup/restore solution for Kubernetes. It was created by Heptio and Velero continues to be actively developed as an open source project. [Here](https://github.com/vmware-tanzu/velero) is the github project and [this](https://velero.io/) is the official website.
 
 In this blog post, we will present different options to backup/restore Kubernetes clusters running on vSphere and we will use [S3](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html) API based Object Store.
@@ -20,10 +21,12 @@ Velero is based on *plugin design pattern* and depending on what cloud your kube
 We will focus on a couple of different provider combinations in this blog post. The Object Store we will use will always be S3 based as it's the most common solution out there and we will use the AWS plugin for Object Store. For snapshotting volumes, we will talk about the following options: 
 1. **Restic:**  [Restic](https://github.com/restic/restic) is a popular open-source tool and because is not tied to a specific storage platform, it gives you some flexilibity to migrate data between different cloud providers. It has some limitations too though which you can read [here](https://velero.io/docs/main/restic/#limitations)
 
-1. **CSI VolumeSnapshots**:  [Container Storage Interface (CSI)](https://github.com/container-storage-interface/spec/blob/master/spec.md) has been promoted to GA in the Kubernetes v1.13 release and features that rely on CSI are being added to Kubernetes. One such feature is called [Volume Snaphots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/) and this feature has been in **beta** state as of Kubernetes v1.17. In order to use this plugin, you have to make sure that CSI is configured correctly for storage provider of your kubernetes cluster e.g. if you use TKGI(Tanzu Kubernetes Grid Integrate), you can follow the steps explained [here](https://docs.pivotal.io/tkgi/1-9/vsphere-cns.html).
 
 1. **vSphere plugin**: vSphere has its own volume snapshot plugin: [velero-plugin-for-vsphere](https://github.com/vmware-tanzu/velero-plugin-for-vsphere). This plugin backups kubernetes persistent volumes to a S3 bucket.
-   
+
+1. **CSI VolumeSnapshots**:  [Container Storage Interface (CSI)](https://github.com/container-storage-interface/spec/blob/master/spec.md) has been promoted to GA in the Kubernetes v1.13 release and features that rely on CSI are being added to Kubernetes. One such feature is called [Volume Snaphots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/) and this feature has been in **beta** state as of Kubernetes v1.17. In order to use this plugin, you have to make sure that CSI is configured correctly for storage provider of your kubernetes cluster e.g. if you use TKGI(Tanzu Kubernetes Grid Integrate), you can follow the steps explained [here](https://docs.pivotal.io/tkgi/1-9/vsphere-cns.html). As of 18.11.2020 *CSI Volume Snapshots* is not supported by *vsphere-csi-driver*; [here](https://github.com/kubernetes-sigs/vsphere-csi-driver/issues/228) is a relevant issue.
+
+
 ## Velero in action
 
 ### 1) Velero with Restic
@@ -54,19 +57,19 @@ kubectl -n velero create secret generic cloud-credentials --from-file=cloud=cred
 
 We  need to opt-in for Restic installation in *values.yaml* with ```deployRestic: true``` and enable privileged mode to access Hostpath by using the following parameters: ```restic.podVolumePath``` and ```restic.privileged```.
 
-For configuring a S3 bucket, we use ```configuration.backupStorageLocation.bucket``` and ```configuration.backupStorageLocation.config.region``` parameters. Note that, we also use a parameter called ```configuration.backupStorageLocation.prefix```. This parameter comes in handy, if we are to use the same S3 bucket for multiple clusters. With the help of the prefix, we can differentiate the cluster specific content easily, so it would make sense to use a prefix that clearly identifiers a Kubernetes cluster.
+For configuring a S3 bucket, we use ```configuration.backupStorageLocation.bucket``` and ```configuration.backupStorageLocation.config.region``` parameters. Note that, we also use a parameter called ```configuration.backupStorageLocation.prefix```. This parameter comes in handy, if we are to use the same S3 bucket for multiple clusters. With the help of the prefix, we can differentiate the cluster specific content easily, so it would make sense to use a prefix that clearly identifiers a Kubernetes cluster. Before executing the command below, make sure you replace the placeholders with the right values.
 
 ```bash
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-helm install velero vmware-tanzu/velero -f values.yaml -n velero \
+helm install velero vmware-tanzu/velero -f values.yaml \
+    -n velero --version 2.13.6 \
     --set configuration.backupStorageLocation.bucket=<your-bucket> \
     --set configuration.backupStorageLocation.config.region=<aws-region> \
     --set configuration.backupStorageLocation.prefix=<some-prefix> \
-    --set restic.podVolumePath=/var/vcap/data/kubelet/pods \
+    --set restic.podVolumePath=/var/lib/kubelet/pods \
     --set restic.privileged=true
-    --set version=v1.5.2
 ```
-(**Note:** for TKG hostpath should be ```/var/lib/kubelet/pods```, where as for TKGI(formerly known as PKS) hostpath values should read ```/var/vcap/data/kubelet/pods```)
+(**Note:** for TKG hostpath should be ```/var/lib/kubelet/pods```, where as for TKGI(formerly known as PKS) *restic.podVolumePath* value should read ```/var/vcap/data/kubelet/pods```)
 
 #### Create a backup && restore
 
@@ -106,11 +109,10 @@ kubectl -n example-app exec -it "$(kubectl get pods -n example-app -o name)"   -
 kubectl delete ns velero
 kubectl delete ns example-app
 ```
-
-### 2) CSI Volume VolumeSnapshots
-
-We will cover *CSI VolumeSnapshots* based velero configuration in a different blog post.
-
-### 3) vSphere plugin
+### 2) vSphere plugin
 
 We will cover *vSphere plugin* based velero configuration in a different blog post.
+
+### 3) CSI Volume VolumeSnapshots
+
+We will cover *CSI VolumeSnapshots* based velero configuration in a different blog post [once it's available](https://github.com/kubernetes-sigs/vsphere-csi-driver/issues/228).
