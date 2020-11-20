@@ -5,6 +5,8 @@ Velero(formerly known as Heptio Ark) is arguably the most popular backup/restore
 
 In this blog post, we will present different options to backup/restore Kubernetes clusters running on vSphere and we will use [S3](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html) API based Object Store.
 
+**NOTE:** *All the files used in this article can be found on [https://github.com/mcelep/blog/tree/master/velero-1](https://github.com/mcelep/blog/tree/master/velero-1)*
+
 ## Dependencies
 You need a S3 API compatible object storage to use Velero. If you have already have a AWS(Amazon Web services) account, you can use a S3 bucket from your AWS account or if you want to just 'kick the tires', you can deploy an open-source alternative such as [MinIO](https://github.com/minio/minio) on your Kubernetes cluster.
 
