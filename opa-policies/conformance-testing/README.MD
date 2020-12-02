@@ -46,7 +46,7 @@ When creating such a report, displaying not only failed policy checks but also p
 
 ### CI/CD
 
-Another point/stage where you could test K8S resources against policies is CI/CD pipelines and to be more precise it's the CD(Continues Delivery) part of CI/CD. It should be quite east to add a 'policy check step' to deployment pipelines in most of the CI/CD solutions out there. And the benefit of running policy conformance checks as part of a deployment pipeline is that, conformance check results can include not only **Ok**s or **Nok**s but also warnings. A CI/CD system might also allow you to save reports  Moreover, if K8S clusters(especially production clusters) can only be accessed via CD pipelines (and not directly by users as we see in many enterprises) and if you can enforce such a 'policy check step' in all deployment pipelines, you end up with a solution that is similar to an 'Admission Controller'.
+Another point/stage where you could test K8S resources against policies is CI/CD pipelines and to be more precise it's the CD(Continuous Delivery) part of CI/CD. It should be quite east to add a 'policy check step' to deployment pipelines in most of the CI/CD solutions out there. And the benefit of running policy conformance checks as part of a deployment pipeline is that, conformance check results can include not only **Ok**s or **Nok**s but also warnings. A CI/CD system might also allow you to save reports  Moreover, if K8S clusters(especially production clusters) can only be accessed via CD pipelines (and not directly by users as we see in many enterprises) and if you can enforce such a 'policy check step' in all deployment pipelines, you end up with a solution that is similar to an 'Admission Controller'.
 
 ## OPA policies in practice
 
