@@ -1,5 +1,5 @@
 ---
-title: Enabling data protection for Kubernetes cluster on VMware Tanzu Mission Control
+title: Enabling data protection for Kubernetes clusters on VMware Tanzu Mission Control
 tags: ['kubernetes', 'tanzu mission control','velero','tanzu','backup', 'tmc']
 status: draft
 ---
