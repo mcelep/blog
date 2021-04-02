@@ -1,0 +1,10 @@
+spec:
+  template:
+    spec:
+      containers:
+      - name: tcpdump
+        image: docker.io/dockersec/tcpdump
+        command:
+        - "/bin/bash"
+        - "-c"
+        - "tcpdump -w /tmp/tcpdump.pcap"
