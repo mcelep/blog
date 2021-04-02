@@ -1,6 +1,10 @@
 # Generating Kubernetes Network Policies By Sniffing Network Traffic
 
-This project contains experimental scripts(bash & python) that creates [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) based on actual network traffic captured from applications running on a Kubernetes cluster.
+This blog post is about an experiment to automate creation of [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) based on actual network traffic captured from applications running on a Kubernetes cluster.
+
+**All the code referred in this blog post can be found [here](https://github.com/mcelep/blog/tree/master/automated-networkpolicy-generation)**
+
+*We worked on the blog post idea with a VMware colleague [Assaf Sauer](https://ch.linkedin.com/in/assaf-sauer-b6261b23).*
 
 ## But why?
 
@@ -10,9 +14,9 @@ For simple applications such as a classical 3-tier architecture app that consist
 
 ## How?
 
-The mechanism behind the automation of  network policy generation is simple. It consists of the following steps described below:
+The idea behind the automation of network policy generation is simple. It consists of the following steps described below:
 
-### Capture network traffic
+### 1/Capture network traffic
 
 First of all, we need a way to capture network traffic of each pod running. We use the good old [tcpdump](https://en.wikipedia.org/wiki/Tcpdump) for capturing the traffic and the [kubernetes sidecar pattern](https://www.google.com/search?q=kubernetes+sidecar+pattern). For this to work, we need the right privileges for the pod/container that will run the [tcpdump image](https://hub.docker.com/r/dockersec/tcpdump) i.e. tcdump container needs to run with root user. We are aware that this might be a no-go in highly secure enterprise kubernetes installations. That said, the envisioned usage for the scripts in this repo is to run the apps in a cluster that: 
 - Does not enforce Network Policies at all(or all ingress/egress traffice is allowed by using a Network Policy such as [this](https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-allow-all-ingress-traffic) and [this](https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-allow-all-egress-traffic))
@@ -20,25 +24,22 @@ First of all, we need a way to capture network traffic of each pod running. We u
 
 In the case where policy generation happens on one cluster and application runs in a different cluster, you will need to make sure that the IPs,FQDNs specified for Network Policies are adjusted accordingly for the target environment. For example if  there is an egress Network Policy that is used for connecting to a Oracle database running on IP 10.2.3.4 and if this IP is different on the actual target environment where the application would be deployed, you will need to adjust that IP.
 
-### Generate network traffic
+### 2/Generate network traffic
 
 In order to create the right Network Policies, we need to capture network traffic that would represent all the use cases, thus all potential network communication related to the application. It's up to you to make sure that during the time the network traffic is captured, you generate meaningful load on the application. For example, if your application is a REST based web application, you would make sure that you hit all the relevant REST endpoints. If the application does some processing based on messages received from a MessageQueue, it's up to you send those messages to the queue so that the applications is performs what it would normally perform in production.
 
-### Collect capture files and Kubernetes data
+### 3/Collect capture files and Kubernetes data
 
 Tcpdump sidecar container runs tcpdump with the following command: ```tcpdump -w /tmp/tcpdump.pcap```. So before we can analyse the traffic, we need to collect all the pcap files from pods. Moreover, we also need some metadata from Kubernetes. We will capture information about Kubernetes resources such as Services, Deployments, ReplicaSets so that later we can use that to analyse which IP is owned by which application.
 
-### Analyse data & Generate Network Policies
+### 4/Analyse data & Generate Network Policies
 
 After collecting all the packet capture and kubernetes data about IPs, Ports, Labels now we can build a graph. In this graph, nodes/vertices would represent pods and edges would be the network communication between these pods. In the python script that generates the network policies,  first a graph is build and in the second part edges are traversed and for each edge a Network Policy is generated.
 
-## Action!
+## Let's see it in action!
 
 Let's go through the steps below and see if we can generate network policies for a test application. The test application is a micro-service demo application from Google that can be found [here](https://github.com/GoogleCloudPlatform/microservices-demo).
 
-### Deploy the test application
-
-Before you run the following commands, check out the value set for *TARGET_NS*. By default it's *netpol-demo*, you can update it if need be.
 
 ### Prepare environment
 You need access to a Kubernetes cluster and you will need the following tools installed:
@@ -48,15 +49,16 @@ You need access to a Kubernetes cluster and you will need the following tools in
 - Tshark which is a Terminal-based [Wireshark](https://www.wireshark.org/) (see [here](https://www.wireshark.org/docs/man-pages/tshark.html))
 - [Cut](https://man7.org/linux/man-pages/man1/cut.1.html)
 - [Jq](https://stedolan.github.io/jq/)
+  
 To install python dependencies, run the following command from top project folder: ```pip install -r requirements.txt```
 
 We've tested the scripts in this repo on Mac OS and Linux.
 
 ### Deploy a test application
 
-```env.sh``` file on the top-level project folder contains some variables that are used in multiple scripts. Please override those variables with your preferred values, e.g. **TARGET_NS** is the Kubernetes namespace which will be used for all scripts.
+```env.sh``` file on the top-level project folder contains some variables that are used in multiple scripts. Please override those variables with your preferred values, e.g. **TARGET_NS** is the Kubernetes namespace which will be used for all scripts. By default *TARGET_NS* is set to *netpol-demo*, you can edit it if you like.
 
-The excerpt below is used to create a Kubernetes and then deploy a test application.
+The excerpt below is used to create a Kubernetes namespace and then deploy a test application.
 The test application in this case is a microservice demo application that can be found in this [repo](https://github.com/GoogleCloudPlatform/microservices-demo). You can however use any application that you fancy.
 
 ```bash
@@ -82,7 +84,9 @@ Run the command below:
 If you run into a issue while running this script, you can re-run it. Bear in mind, though that you will need to make sure that app traffic is generated also during the re-run.
 
 ### Generate traffic
-In the case of our demo application, there is pod called *load-generator* that will be deployed with the rest of the other app components. This pod keeps calling the ui to generate application flows. You can see the logs from *load-generator* pod by running ```kubectl -n $TARGET_NS logs $(kubectl get pods -l app=loadgenerator -o jsonpath='{.items[0].metadata.name}' -n $TARGET_NS) -c main```. So you don't need to do anything extra if you use the same Google microservice demo application to generate network traffic. However if yo use another application, you will need to run your own load generation tool while the script *./2-copy-capture-and-metadata.sh* keeps printing out that message: 'Going to wait for X seconds so that application traffic can be generated...'
+In the case of our demo application, there is pod called *load-generator* that will be deployed with the rest of the other app components. This pod keeps calling the ui to generate application flows. You can see the logs from *load-generator* pod by running: ```kubectl -n $TARGET_NS logs $(kubectl get pods -l app=loadgenerator -o jsonpath='{.items[0].metadata.name}' -n $TARGET_NS) -c main```.
+
+You don't need to do anything extra if you use the same Google microservice demo application to generate network traffic. However if yo use another application, you will need to run your own load generation tool while the script *./2-copy-capture-and-metadata.sh* keeps printing out that message: 'Going to wait for X seconds so that application traffic can be generated...'
 
 ### Analyse data & build NetworkPolicies
 Run the command below to analyse the data and generate NetworkPolicies. The input to the script is a capture json file that is prefixed with *capture-*. You can find candidate capture file(s) by running ```ls .tmp/capture-*.json```.
@@ -113,4 +117,6 @@ Scripts in this repo were created in a proof of concept setting, code quality ha
 
 - Only TCP traffic is analysed. There's a NetworkPolicy for DNS generated but there will be no other UDP based NetworkPolicies created.
 
-Feel free to extend these scripts to cover more use cases.
+- Running tcpdump requires some elevated privileges. In an environment/cluster where NetworkPolicies would be enforced, the chances are that you can't get those elevated privileges. We think, however,  that the concept/scripts provided in this blog post could be beneficial in some use cases such as COTS(commercial off-the-shelf) software for Kubernetes. In a COTS software on Kubernetes scenario, a Vendor could benefit from generating NetworkPolicies in a cluster that is not very restrictive from a security perspective. Generated NetworkPolicies could then be provided as a template to the software vendors' customers.
+
+Feel free to extend these scripts to cover more use cases :)
