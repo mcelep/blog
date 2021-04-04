@@ -14,7 +14,11 @@ For simple applications such as a classical 3-tier architecture app that consist
 
 ## How?
 
-The idea behind the automation of network policy generation is simple. It consists of the following steps described below:
+The idea behind the automation of network policy generation is simple. The diagram below summarizes it:
+![Big picture](system-overall.png)
+
+
+It consists of the following steps described below:
 
 ### 1/Capture network traffic
 
@@ -117,6 +121,6 @@ Scripts in this repo were created in a proof of concept setting, code quality ha
 
 - Only TCP traffic is analysed. There's a NetworkPolicy for DNS generated but there will be no other UDP based NetworkPolicies created.
 
-- Running tcpdump requires some elevated privileges. In an environment/cluster where NetworkPolicies would be enforced, the chances are that you can't get those elevated privileges. We think, however,  that the concept/scripts provided in this blog post could be beneficial in some use cases such as COTS(commercial off-the-shelf) software for Kubernetes. In a COTS software on Kubernetes scenario, a Vendor could benefit from generating NetworkPolicies in a cluster that is not very restrictive from a security perspective. Generated NetworkPolicies could then be provided as a template to the software vendors' customers.
+- Running tcpdump requires some elevated privileges. In an environment/cluster where NetworkPolicies would be enforced, the chances are that you can't get those elevated privileges. We think, however,  that the concept/scripts provided in this blog post could be beneficial in some use cases such as COTS(commercial off-the-shelf) software for Kubernetes. In a COTS software on Kubernetes scenario, a Vendor could benefit from generating NetworkPolicies in a cluster that is not very restrictive from a security perspective. Generated NetworkPolicies could then be provided as a template to the software vendor's customers.
 
 Feel free to extend these scripts to cover more use cases :)
