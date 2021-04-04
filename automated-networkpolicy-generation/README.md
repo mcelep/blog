@@ -1,3 +1,9 @@
+---
+title: Generating Kubernetes Network Policies By Sniffing Network Traffic
+tags: ['kubernetes', 'NetworkPolicy','automation','network']
+status: draft
+---
+
 # Generating Kubernetes Network Policies By Sniffing Network Traffic
 
 This blog post is about an experiment to automate creation of [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) based on actual network traffic captured from applications running on a Kubernetes cluster.
@@ -15,7 +21,7 @@ For simple applications such as a classical 3-tier architecture app that consist
 ## How?
 
 The idea behind the automation of network policy generation is simple. The diagram below summarizes it:
-![Big picture]([system-overall.png](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/system-overall.png?raw=true))
+[![Big picture](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/system-overall.png?raw=true)](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/system-overall.png?raw=true)
 
 
 It consists of the following steps described below:
@@ -103,9 +109,10 @@ Generated NetworkPolicies should be in  *.tmp/network-policies* folder. For our 
 
 There's also a graph(in [DOT](https://graphviz.org/doc/info/lang.html) format) generated as a result of running the *3-analyse.py* script. You can use an online tool such as [this](https://dreampuf.github.io/GraphvizOnline) or [this](https://edotor.net/) to create a visual representation of the graph. Here are some example images created via dot representation.
 
-![Micro-service demo app graph]([graph_ms_demo.png](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_ms_demo.png?raw=true))
+[![Micro-service demo app graph](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_ms_demo.png?raw=true)](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_ms_demo.png?raw=true)
 
-![Simple demo app graph]([graph_simple.png](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_simple.png?raw=true))
+[![Simple demo app graph](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_simple.png?raw=true)](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_simple.png?raw=true)
+
 
 ### Clean-up
 
