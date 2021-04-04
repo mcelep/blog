@@ -8,7 +8,7 @@ status: draft
 
 This blog post is about an experiment to automate creation of [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) based on actual network traffic captured from applications running on a Kubernetes cluster.
 
-**All the code referred in this blog post can be found [here](https://github.com/mcelep/blog/tree/master/automated-networkpolicy-generation)**
+**All the code referred in this blog post can be found [here](https://github.com/mcelep/blog/tree/master/automated-networkpolicy-generation).**
 
 *We worked on the blog post idea with a VMware colleague [Assaf Sauer](https://ch.linkedin.com/in/assaf-sauer-b6261b23).*
 
@@ -23,26 +23,26 @@ For simple applications such as a classical 3-tier architecture app that consist
 The idea behind the automation of network policy generation is simple. The diagram below summarizes it:
 [![Big picture](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/system-overall.png?raw=true)](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/system-overall.png?raw=true)
 
-
 It consists of the following steps described below:
 
-### 1/Capture network traffic
+### 1) Capture network traffic
 
-First of all, we need a way to capture network traffic of each pod running. We use the good old [tcpdump](https://en.wikipedia.org/wiki/Tcpdump) for capturing the traffic and the [kubernetes sidecar pattern](https://www.google.com/search?q=kubernetes+sidecar+pattern). For this to work, we need the right privileges for the pod/container that will run the [tcpdump image](https://hub.docker.com/r/dockersec/tcpdump) i.e. tcdump container needs to run with root user. We are aware that this might be a no-go in highly secure enterprise kubernetes installations. That said, the envisioned usage for the scripts in this repo is to run the apps in a cluster that: 
-- Does not enforce Network Policies at all(or all ingress/egress traffice is allowed by using a Network Policy such as [this](https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-allow-all-ingress-traffic) and [this](https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-allow-all-egress-traffic))
+First of all, we need a way to capture network traffic of each pod running. We use the good old [tcpdump](https://en.wikipedia.org/wiki/Tcpdump) for capturing the traffic and the [kubernetes sidecar pattern](https://www.google.com/search?q=kubernetes+sidecar+pattern). For this to work, we need the right privileges for the pod/container that will run the [tcpdump image](https://hub.docker.com/r/dockersec/tcpdump) i.e. tcpdump container needs to run with root user. We are aware that this might be a no-go in highly secure enterprise kubernetes installations. That said, the envisioned usage for the scripts in this repo is to run the apps in a cluster that: 
+
+- Does not enforce Network Policies at all(or all ingress/egress traffic is allowed by using a Network Policy such as [this](https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-allow-all-ingress-traffic) and [this](https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-allow-all-egress-traffic))
 - Allows a pod to run with user root
 
 In the case where policy generation happens on one cluster and application runs in a different cluster, you will need to make sure that the IPs,FQDNs specified for Network Policies are adjusted accordingly for the target environment. For example if  there is an egress Network Policy that is used for connecting to a Oracle database running on IP 10.2.3.4 and if this IP is different on the actual target environment where the application would be deployed, you will need to adjust that IP.
 
-### 2/Generate network traffic
+### 2) Generate network traffic
 
 In order to create the right Network Policies, we need to capture network traffic that would represent all the use cases, thus all potential network communication related to the application. It's up to you to make sure that during the time the network traffic is captured, you generate meaningful load on the application. For example, if your application is a REST based web application, you would make sure that you hit all the relevant REST endpoints. If the application does some processing based on messages received from a MessageQueue, it's up to you send those messages to the queue so that the applications is performs what it would normally perform in production.
 
-### 3/Collect capture files and Kubernetes data
+### 3) Collect capture files and Kubernetes data
 
 Tcpdump sidecar container runs tcpdump with the following command: ```tcpdump -w /tmp/tcpdump.pcap```. So before we can analyse the traffic, we need to collect all the pcap files from pods. Moreover, we also need some metadata from Kubernetes. We will capture information about Kubernetes resources such as Services, Deployments, ReplicaSets so that later we can use that to analyse which IP is owned by which application.
 
-### 4/Analyse data & Generate Network Policies
+### 4) Analyse data & Generate Network Policies
 
 After collecting all the packet capture and kubernetes data about IPs, Ports, Labels now we can build a graph. In this graph, nodes/vertices would represent pods and edges would be the network communication between these pods. In the python script that generates the network policies,  first a graph is build and in the second part edges are traversed and for each edge a Network Policy is generated.
 
@@ -51,7 +51,7 @@ After collecting all the packet capture and kubernetes data about IPs, Ports, La
 Let's go through the steps below and see if we can generate network policies for a test application. The test application is a micro-service demo application from Google that can be found [here](https://github.com/GoogleCloudPlatform/microservices-demo).
 
 
-### Prepare environment
+### Environment preparation
 You need access to a Kubernetes cluster and you will need the following tools installed:
 - Kubernetes CLI
 - Python (v3)
@@ -112,7 +112,6 @@ There's also a graph(in [DOT](https://graphviz.org/doc/info/lang.html) format) g
 [![Micro-service demo app graph](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_ms_demo.png?raw=true)](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_ms_demo.png?raw=true)
 
 [![Simple demo app graph](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_simple.png?raw=true)](https://github.com/mcelep/blog/blob/master/automated-networkpolicy-generation/graph_simple.png?raw=true)
-
 
 ### Clean-up
 
