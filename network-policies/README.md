@@ -59,7 +59,7 @@ If you have lots of NetworkPolicies to write because your app has many component
 
 - [Here](https://www.youtube.com/watch?v=eSAzGx34gUE) is a video and [here](https://octetz.com/docs/2020/2020-01-06-vim-k8s-yaml-support/) is a blog post that shows how you can do it with Vim.
   
-- If Visual Studio Code is your editor, you might want to look into [this plugin](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml)
+- If Visual Studio Code is your editor of choice, you might want to look into [this plugin](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml)
 
 - For most of the editors you should be able to get at least YAML syntax support so go ahead install a plugin or update your editor config so that YAML support is activated.
 
