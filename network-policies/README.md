@@ -5,7 +5,7 @@ status: draft
 ---
 # Lifecycle of Kubernetes Network Policies
 
-In this blog post, we will talk about the whole lifecycle of Kubernetes Network Policies covering topics such as creation, editing, governance, debugging and we will also share insights about some tools which can create better user experiences when dealing with Network Policies.
+In this blog post, we will talk about the whole lifecycle of Kubernetes Network Policies covering topics such as creation, editing, governance, debugging and we will also share insights which can create better user experiences when dealing with Network Policies.
 
 ## Enter Network Policies
 
@@ -21,9 +21,9 @@ Network Policies, which play a very critical component for network security, are
 
 One pattern that helps a lot in many Enterprises, is opening communication (at least for some common services such as a logging service, monitoring service) all the way to perimeters of the Kubernetes Clusters and then let Network Policies control the network traffic. When a team needs to manage Network Policies and at the same request new Firewall rules via different mechanisms such as ServiceNow or some other workflow/ticketing system, the total turnaround time for getting the Network access just takes too much time. The main motivation behind this pattern is doing the lengthy Firewall changes just once and on a Kubernetes platform level and rely on Network Policies for the fine-grained control.
 
-When the Network Perimeter Security is controlled on the Kubernetes cluster level, the default allowed traffic will need to be controlled carefully i.e. you will probably want to limit what ingress / egress network traffic is allowed by default. One should bear in mind that, when no Network Policy is applied on a namespace, Kubernetes exercises no control for the network traffic. This can be done in different ways depending on the [CNI(Container Network Interface)](https://github.com/containernetworking/cni) plugin used in a Kubernetes cluster. One way of doing it would be do apply a Network Policy that blocks most of the egress/ingress traffic for all Namespaces and control RBAC(role based access control) in such a way that non-admin users of Kubernetes clusters can't create/edit/delete Network Policy objects themselves without some governance. Based on the software that implements CNI plugin that your clusters use, you might be also limit what network access each namespace gets by default. I know of companies who do it via NSX-T firewall rules.
+![A Pattern: Network Perimeter Security Delegation to Kubernetes](https://github.com/mcelep/blog/blob/397bbb672a302f1a0b4b9dcf9883912d258ceebc/network-policies/network_perimeter_kubernetes.png?raw=true)
 
-!!!TODO: Add diagram
+When the Network Perimeter Security is controlled on the Kubernetes cluster level, the default allowed traffic will need to be controlled carefully i.e. you will probably want to limit what ingress / egress network traffic is allowed by default. One should bear in mind that, when no Network Policy is applied on a namespace, Kubernetes exercises no control for the network traffic. This can be done in different ways depending on the [CNI(Container Network Interface)](https://github.com/containernetworking/cni) plugin used in a Kubernetes cluster. One way of doing it would be do apply a Network Policy that blocks most of the egress/ingress traffic for all Namespaces and control RBAC(role based access control) in such a way that non-admin users of Kubernetes clusters can't create/edit/delete Network Policy objects themselves without some governance. Based on the software that implements CNI plugin that your clusters use, you might be also limit what network access each namespace gets by default. Using NSX-T firewall rules to implement this idea is something we know from the field.
 
  At the same, for such a pattern to work successfully, the turnaround time for applying Network Policies should be as short as possible. In the Governance section of the post, a couple of ideas about how governance can be shaped so that Network Policies can be accepted or rejected as quickly as possible.
 
@@ -64,7 +64,7 @@ If you have lots of NetworkPolicies to write because your app has many component
 - For most of the editors you should be able to get at least YAML syntax support so go ahead install a plugin or update your editor config so that YAML support is activated.
 
 [Cilium editor](https://editor.cilium.io/) is a tool to create the Network Policies with a graphical editor. Especially when beginning writing Network Policies, the visual interaction might be very helpful. Below is a snapshot from the cilium editor:
-![Cilium Editor](cilium-editor.png)
+![Cilium Editor](https://github.com/mcelep/blog/blob/397bbb672a302f1a0b4b9dcf9883912d258ceebc/network-policies/cilium-editor.png?raw=true)
 
 For an application that includes many different kinds of components e.g. a micro-service application, writing a lot of Network Policies manually can be quite cumbersome. If your application is COTS(Commercially Available Off the Shelf) software, perhaps the software should provide all the Network Policies and keep them up to date as the Software and its components evolve.
 
@@ -86,8 +86,6 @@ In most of the environments where you would require Network Policies, there will
 - Security experts need to approve or reject the Pull request and provide enough information about why if they reject a pull request.
 - If a pull request gets approved, a pipeline picks up the change and applies it on the cluster, developer gets notified.
 
-!!!TODO: Add diagram
-
 The steps above capture the gist of a Git pull request process. Compared to a traditional model in which there would be a ticket opened in a system such as ServiceNow, there might be some improvements. For example, instead of using some free text or some other format to capture data, users end up creating the Network Policy in a way that can be directly used on a Kubernetes clusters. Ideally, automation should be used as much as possible to make sure Network Policy requests are processed as correctly and as quickly as possible.
 
 In the next section, we will go into details of how Network Policies creation can be fully automated without any human interaction and GIT. Using something like [Gatekeeper](https://github.com/open-policy-agent/gatekeeper) and security folks letting the whole process be fully automated, is sometimes too big of a change to implement. Using a Git based approach with at least some automation, might already give you loads of benefits and improve the time to production significantly. Ideas below could be embedded into your Git Pull Requests based process:
@@ -100,7 +98,7 @@ In the next section, we will go into details of how Network Policies creation ca
 
 [Open Policy Agent(OPA)](https://www.openpolicyagent.org/) is a Cloud Native Computing Foundation project and it aims at solving 'policy enforcement' problem across the Cloud-Native stack(Kubernetes, Docker, Envoy, Terraform,etc.). OPA comes with a language called [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) to author policies efficiently and other than Rego, there are a number of tools & components in OPA to make use of policies easier & efficient.
 
-The quickest way auditing Network Policies automatically can be implemented directly on a K8S cluster. OPA comes with a component called [Gatekeeper](https://www.openpolicyagent.org/docs/latest/kubernetes-introduction/) This components is an Admission Controller, and it aims at managing and enforcing policies easily on K8S clusters. That is, one can hook into [Admission Controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/) mechanism of Kubernetes to reject K8S Resource modifications that are not allowed by policies. By writing rego policies that control what Network Policies are allowed and rejected, a developer will have very quick feedback regarding which network traffic is allowed.
+The quickest way auditing Network Policies automatically can be implemented directly on a K8S cluster. OPA comes with a component called [Gatekeeper](https://www.openpolicyagent.org/docs/latest/kubernetes-introduction/) This components is an Admission Controller, and it aims at managing and enforcing policies easily on K8S clusters. That is, one can hook into [Admission Controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/) mechanism of Kubernetes to reject K8S Resource modifications that are not allowed by policies. By writing *Rego* policies that control what Network Policies are allowed and rejected, a developer will have very quick feedback regarding which network traffic is allowed.
 
 ## Debugging
 
@@ -108,4 +106,4 @@ Another, important stage while using Network Policies is debugging your Network 
 
 Running a tool like tcpdump on Kubernetes nodes where the target application pods are running, might come in very handy. You can run tcpdump as a sidecar to your application pods or run tcpdump on a Kubernetes node's interface and apply the necessary filters. [This post](https://itnext.io/generating-kubernetes-network-policies-by-sniffing-network-traffic-6d5135fe77db) and [this one](https://xxradar.medium.com/how-to-tcpdump-effectively-in-kubernetes-part-1-a1546b683d2f) should give you an idea about how it can be done.
 
-Moreover, depending on the CNI tool that you use, you might be able to extract useful information from CNI software directly. For NSX-T users[this link](https://blogs.vmware.com/management/2019/06/kubernetes-insights-using-vrealize-network-insight-part-1.html) might come in handy, and for Cilium there are some handy tools as explained [here](https://docs.cilium.io/en/v1.9/policy/troubleshooting/#policy-tracing). For Antrea, you might want to checkout [this](https://github.com/vmware-tanzu/antrea/blob/main/docs/network-flow-visibility.md) and for IpTable relevant issues [this](https://github.com/box/kube-iptables-tailer).
+Moreover, depending on the CNI tool that you use, you might be able to extract useful information from CNI software directly. For NSX-T users, [this](https://blogs.vmware.com/management/2019/06/kubernetes-insights-using-vrealize-network-insight-part-1.html) might come in handy, and for Cilium there are some handy tools as explained [here](https://docs.cilium.io/en/v1.9/policy/troubleshooting/#policy-tracing). For Antrea, you might want to checkout [this](https://github.com/vmware-tanzu/antrea/blob/main/docs/network-flow-visibility.md) and for IpTable relevant issues [this](https://github.com/box/kube-iptables-tailer).
