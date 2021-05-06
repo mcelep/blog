@@ -7,6 +7,8 @@ status: draft
 
 In this blog post, we will talk about the whole lifecycle of Kubernetes Network Policies covering topics such as creation, editing, governance, debugging and we will also share insights which can create better user experiences when dealing with Network Policies.
 
+  *[Andy Knapp](https://www.linkedin.com/in/andy-knapp-6a72b6108/) has reviewed this article and suggested some changes. Thanks a lot Andy!*
+
 ## Enter Network Policies
 
 As Kubernetes continues to get adapted more in large Enterprises, security relevant aspects of Kubernetes such as Network Policies, which lets you to control what network resources are allowed to be accessed from/to Pods, become more important.
