@@ -53,6 +53,15 @@ If you have lots of NetworkPolicies to write because your app has many component
       - {key: app, operator: In, values: [bookstore, database]}
 ```      
 
+#### DNS
+
+Forgetting adding a **Network Policy for DNS** calls is another common mistake. Depending on how your pod is configured as explained [here](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy), application pods might need to communicate to the DNS server running on your cluster or a DNS server running outside. Make sure to add a Network Policy to accommodate DNS communication needs to your namespace. If your CNI plugin allows it you can do also apply a DNS policy on the cluster level, e.g. with [Antrea's ClusterNetworkPolicy](https://github.com/vmware-tanzu/antrea/blob/28ef522ced7045f567c22b916cb29d9272f9c92b/docs/antrea-network-policy.md).
+
+#### Pod A's Egress is Pod B's Ingress 
+
+If **Pod A** needs to call **Pod B**, you will need to create a Network Policy that has **egress** rules for **Pod A** and another Network Policy that has **ingress** rules for **Pod B**. It's quite common to forget this symmetry requirement between egress & ingress rules for communication between Pods.
+
+
 ### Editing Network Policies
 
 "Kubernetes and YAML in everybody's mind really go together" says Joe Beda, one of the co-creators of Kubernetes, in [this talk](https://www.youtube.com/watch?v=8PpgqEqkQWA). And he's right, it's the recommended way of writing configuration files as you can see [here](https://kubernetes.io/docs/concepts/configuration/overview/) and most of the folks that I've worked with use YAML (instead of JSON). If I got a penny for every time I saw someone break indentation in a YAML file, I would be rich by now :).  So do yourself a favor and use an editor with a plugin that helps you notice/fix these issues easily. Basic YAML syntax support will definitely help a lot, if you can get a plugin that also understand Kubernetes YAML syntax even better! Improved Kubernetes YAML editing experience will not only help for Network Policies obviously, you can improve the whole Kubernetes experience by a more pleasant resource editing experience. Here are some tips:
@@ -106,4 +115,4 @@ Another important stage while using Network Policies is debugging your Network P
 
 Running a tool like tcpdump on Kubernetes nodes where the target application pods are running, might come in very handy. You can run tcpdump as a sidecar to your application pods or run tcpdump on a Kubernetes node's interface and apply the necessary filters. [This post](https://itnext.io/generating-kubernetes-network-policies-by-sniffing-network-traffic-6d5135fe77db) and [this one](https://xxradar.medium.com/how-to-tcpdump-effectively-in-kubernetes-part-1-a1546b683d2f) should give you an idea about how it can be done.
 
-Moreover, depending on the CNI tool that you use, you might be able to extract useful information from CNI software directly. For NSX-T users, [this](https://blogs.vmware.com/management/2019/06/kubernetes-insights-using-vrealize-network-insight-part-1.html) might come in handy, and for Cilium there are some handy tools as explained [here](https://docs.cilium.io/en/v1.9/policy/troubleshooting/#policy-tracing). For Antrea, you might want to checkout [this](https://github.com/vmware-tanzu/antrea/blob/main/docs/network-flow-visibility.md) and for IpTable relevant issues [this](https://github.com/box/kube-iptables-tailer).
+Moreover, depending on the CNI tool that you use, you might be able to extract useful information from CNI software directly. For NSX-T users, [this](https://blogs.vmware.com/management/2019/06/kubernetes-insights-using-vrealize-network-insight-part-1.html) might come in handy, and for Cilium there are some nice tools too, see [here](https://docs.cilium.io/en/v1.9/policy/troubleshooting/#policy-tracing) and [here](https://github.com/cilium/hubble). For Antrea, you might want to checkout [this](https://github.com/vmware-tanzu/antrea/blob/main/docs/network-flow-visibility.md) and for IpTable relevant issues [this](https://github.com/box/kube-iptables-tailer).
