@@ -17,7 +17,7 @@ In many K8S installations, NFS becomes the initial choice for hosting Persistent
 
 Statefulset relies on an element called ```volumeClaimTemplates``` to control how PersistentVolumeClaims are used to map each PersistentVolume to a specific Pod/Replica.
 
-##<a name="pattern"></a> How?
+## <a name="pattern"></a> How?
 
 StatefulSet uses the following pattern to generate PersistentVolumeClaim names:
 
