@@ -1,0 +1,21 @@
+apiVersion: skaffold/v2beta23
+kind: Config
+build:
+  local:
+    push: false
+  artifacts:
+  - image: k8s-debug-flow-viewer
+    context: .
+    hooks:
+      after:
+        - command: ["sh","-c","open http://localhost:8080"]
+          os: [darwin]
+deploy:
+  docker:
+    images: 
+    - k8s-debug-flow-viewer
+portForward:
+- resourceType: Container
+  resourceName: k8s-debug-flow-viewer
+  port: 8080
+  localPort: 8080

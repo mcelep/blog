@@ -1,0 +1,82 @@
+<html>
+<head>
+  <title>Kubernetes application debugging flow</title>
+
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+    }
+
+    .header input[type=text] {
+      width: 500px;
+      max-width: 100%;
+    }
+
+    .console textarea {
+      width: 100%;
+      min-height: 80px;
+      border: none;
+      padding: 0;
+    }
+
+    .canvas {
+      border: solid 1px black;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h3>Kubernetes application debugging flow</h3>
+  </div>
+
+  <div class="canvas">
+    <div id="js-canvas"></div>
+  </div>
+
+  <!-- viewer -->
+  <script src="https://unpkg.com/bpmn-js@8.7.3/dist/bpmn-navigated-viewer.development.js"></script>
+  
+  <!-- jquery (required for example only) -->
+  <script src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+
+  <!-- app -->
+
+  <script>
+    var viewer = new BpmnJS({
+      container: $('#js-canvas')
+    });
+
+    function openFromUrl(url) {
+      $.ajax(url, { dataType : 'text' }).done(async function(xml) {
+        try {
+          await viewer.importXML(xml);
+          viewer.get('canvas').zoom('fit-viewport');
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
+
+    $('#js-open').click(function() {
+      var url = $('#js-url').val();
+      openFromUrl(url);
+    });
+
+
+    ///// auto open ?url=diagram-url ///////////////////////
+
+    (function() {
+      var str = window.location.search;
+      var match = /(?:\&|\?)url=([^&]+)/.exec(str);
+
+      if (match) {
+        var url = decodeURIComponent(match[1]);
+        $('#js-url').val(url);
+        openFromUrl(url);
+      }else{
+        openFromUrl('./resources/diagram-k8s-debug.bpmn');
+      }
+    })();
+  </script>
+</html>
